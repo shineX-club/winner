@@ -2,25 +2,12 @@ const path = require('path')
 const { createLoader } = require('simple-functional-loader')
 const frontMatter = require('front-matter')
 const withSmartQuotes = require('@silvenon/remark-smartypants')
-const { withTableOfContents } = require('./remark/withTableOfContents')
-const { withSyntaxHighlighting } = require('./remark/withSyntaxHighlighting')
-const { withNextLinks } = require('./remark/withNextLinks')
-const { withLinkRoles } = require('./rehype/withLinkRoles')
 const minimatch = require('minimatch')
-const withExamples = require('./remark/withExamples')
-const {
-  highlightCode,
-  fixSelectorEscapeTokens,
-  simplifyToken,
-  normalizeTokens,
-} = require('./remark/utils')
-const { withPrevalInstructions } = require('./remark/withPrevalInstructions')
 const withBundleAnalyzer = require('@next/bundle-analyzer')({
   enabled: process.env.ANALYZE === 'true',
 })
 const defaultConfig = require('tailwindcss/resolveConfig')(require('tailwindcss/defaultConfig'))
 const dlv = require('dlv')
-const Prism = require('prismjs')
 
 const fallbackLayouts = {
   'src/pages/docs/**/*': ['@/layouts/DocumentationLayout', 'DocumentationLayout'],
@@ -148,47 +135,15 @@ module.exports = withBundleAnalyzer({
       }),
     })
 
-    config.module.rules.push({
-      resourceQuery: /highlight/,
-      use: [
-        options.defaultLoaders.babel,
-        createLoader(function (source) {
-          let lang =
-            new URLSearchParams(this.resourceQuery).get('highlight') ||
-            this.resourcePath.split('.').pop()
-          let isDiff = lang.startsWith('diff-')
-          let prismLang = isDiff ? lang.substr(5) : lang
-          let grammar = Prism.languages[isDiff ? 'diff' : prismLang]
-          let tokens = Prism.tokenize(source, grammar, lang)
-
-          if (lang === 'css') {
-            fixSelectorEscapeTokens(tokens)
-          }
-
-          return `
-            export const tokens = ${JSON.stringify(tokens.map(simplifyToken))}
-            export const lines = ${JSON.stringify(normalizeTokens(tokens))}
-            export const code = ${JSON.stringify(source)}
-            export const highlightedCode = ${JSON.stringify(highlightCode(source, lang))}
-          `
-        }),
-      ],
-    })
-
     let mdx = (plugins = []) => [
       {
         loader: '@mdx-js/loader',
         options: {
           remarkPlugins: [
-            withPrevalInstructions,
-            withExamples,
-            withTableOfContents,
-            withSyntaxHighlighting,
-            withNextLinks,
             withSmartQuotes,
             ...plugins,
           ],
-          rehypePlugins: [withLinkRoles],
+          rehypePlugins: [],
         },
       },
       createLoader(function (source) {
@@ -209,7 +164,7 @@ module.exports = withBundleAnalyzer({
         {
           loader: '@mdx-js/loader',
           options: {
-            remarkPlugins: [withSyntaxHighlighting],
+            remarkPlugins: [],
           },
         },
       ],
