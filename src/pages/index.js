@@ -1,9 +1,7 @@
-import { Testimonials } from '@/components/Testimonials'
 import { ReadyMadeComponents } from '@/components/home/ReadyMadeComponents'
 import { Logo } from '@/components/Logo'
 import { Footer } from '@/components/home/Footer'
 import NextLink from 'next/link'
-import Head from 'next/head'
 import { NavItems } from '@/components/Header'
 import styles from './index.module.css'
 import clsx from 'clsx'
@@ -79,19 +77,6 @@ function Header() {
 export default function Home() {
   return (
     <>
-      <Head>
-        <meta
-          key="twitter:title"
-          name="twitter:title"
-          content="Tailwind CSS - Rapidly build modern websites without ever leaving your HTML."
-        />
-        <meta
-          key="og:title"
-          property="og:title"
-          content="Tailwind CSS - Rapidly build modern websites without ever leaving your HTML."
-        />
-        <title>Tailwind CSS - Rapidly build modern websites without ever leaving your HTML.</title>
-      </Head>
       <div className="space-y-20 overflow-hidden sm:space-y-32 md:space-y-40">
         <Header />
       </div>

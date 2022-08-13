@@ -51,7 +51,7 @@ export function NavItems() {
       </li>
       <li>
         <Link href="/blog">
-          <a className="hover:text-sky-500 dark:hover:text-sky-400">Wiki</a>
+          <a className="hover:text-sky-500 dark:hover:text-sky-400">Blog</a>
         </Link>
       </li>
     </>

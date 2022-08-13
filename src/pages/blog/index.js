@@ -14,7 +14,9 @@ export default function Blog() {
           Latest Updates
         </h1>
         <p className="text-lg text-slate-700 dark:text-slate-400">
-          <Widont>All the latest news, straight from the team.</Widont>
+          <Widont>
+            Updates, stories, and announcements from the team.
+          </Widont>
         </p>
       </header>
       <div className="relative sm:pb-12 sm:ml-[calc(2rem+1px)] md:ml-[calc(3.5rem+1px)] lg:ml-[max(calc(14.5rem+1px),calc(100%-48rem))]">

@@ -3,14 +3,11 @@ import '../css/main.css'
 import 'focus-visible'
 import { useState, useEffect, Fragment } from 'react'
 import { Header } from '@/components/Header'
-import { Title } from '@/components/Title'
 import Router from 'next/router'
 import ProgressBar from '@badrap/bar-of-progress'
 import Head from 'next/head'
-import socialCardLarge from '@/img/social-card-large.jpg'
 import { ResizeObserver } from '@juggle/resize-observer'
 import 'intersection-observer'
-import { SearchProvider } from '@/components/Search'
 
 if (typeof window !== 'undefined' && !('ResizeObserver' in window)) {
   window.ResizeObserver = ResizeObserver
@@ -58,8 +55,6 @@ export default function App({ Component, pageProps, router }) {
     : {}
   const showHeader = router.pathname !== '/'
   const meta = Component.layoutProps?.meta || {}
-  const description =
-    meta.metaDescription || meta.description || 'Documentation for the Tailwind CSS framework.'
 
   if (router.pathname.startsWith('/examples/')) {
     return <Component {...pageProps} />
@@ -73,44 +68,23 @@ export default function App({ Component, pageProps, router }) {
 
   return (
     <>
-      <Title suffix="Tailwind CSS">{meta.metaTitle || meta.title}</Title>
       <Head>
-        <meta key="twitter:card" name="twitter:card" content="summary_large_image" />
-        <meta key="twitter:site" name="twitter:site" content="@tailwindcss" />
-        <meta key="twitter:description" name="twitter:description" content={description} />
-        <meta
-          key="twitter:image"
-          name="twitter:image"
-          content={`https://tailwindcss.com${socialCardLarge}`}
-        />
-        <meta key="twitter:creator" name="twitter:creator" content="@tailwindcss" />
-        <meta
-          key="og:url"
-          property="og:url"
-          content={`https://tailwindcss.com${router.pathname}`}
-        />
-        <meta key="og:type" property="og:type" content="article" />
-        <meta key="og:description" property="og:description" content={description} />
-        <meta
-          key="og:image"
-          property="og:image"
-          content={`https://tailwindcss.com${socialCardLarge}`}
-        />
+        <title>Winner</title>
+        <meta name="description" content="A Smart Contract Powered NFT Gambling Platform"></meta>
+        <meta name="keywords" content="crypto,bet,gamble,nft,contract,web3,eth"></meta>
       </Head>
-      <SearchProvider>
-        {showHeader && (
-          <Header
-            hasNav={Boolean(Component.layoutProps?.Layout?.nav)}
-            navIsOpen={navIsOpen}
-            onNavToggle={(isOpen) => setNavIsOpen(isOpen)}
-            title={meta.title}
-            section={section}
-          />
-        )}
-        <Layout {...layoutProps}>
-          <Component section={section} {...pageProps} />
-        </Layout>
-      </SearchProvider>
+      {showHeader && (
+        <Header
+          hasNav={Boolean(Component.layoutProps?.Layout?.nav)}
+          navIsOpen={navIsOpen}
+          onNavToggle={(isOpen) => setNavIsOpen(isOpen)}
+          title={meta.title}
+          section={section}
+        />
+      )}
+      <Layout {...layoutProps}>
+        <Component section={section} {...pageProps} />
+      </Layout>
     </>
   )
 }
