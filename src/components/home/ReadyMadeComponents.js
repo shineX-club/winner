@@ -40,12 +40,6 @@ export function ReadyMadeComponents() {
   return (
     <section id="ready-made-components">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
-        <IconContainer
-          className="dark:bg-indigo-500 dark:highlight-white/20"
-          light={require('@/img/icons/home/ready-made-components.png').default}
-          dark={require('@/img/icons/home/dark/ready-made-components.png').default}
-        />
-        <Caption className="text-indigo-500">Ready-made components</Caption>
         <BigText>
           <Widont>Move even faster with Tailwind UI.</Widont>
         </BigText>

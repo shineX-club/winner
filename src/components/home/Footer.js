@@ -2,34 +2,32 @@ import Link from 'next/link'
 import { Logo } from '@/components/Logo'
 
 const footerNav = [
-  {
-    'Getting Started': [
-      { title: 'GitHub', href: 'https://github.com/tailwindlabs/tailwindcss' },
-      { title: 'Discord', href: '/discord' },
-      { title: 'Twitter', href: 'https://twitter.com/tailwindcss' },
-      { title: 'YouTube', href: 'https://www.youtube.com/tailwindlabs' },
-    ],
-    'Core Concepts': [
-      { title: 'GitHub', href: 'https://github.com/tailwindlabs/tailwindcss' },
-      { title: 'Discord', href: '/discord' },
-      { title: 'Twitter', href: 'https://twitter.com/tailwindcss' },
-      { title: 'YouTube', href: 'https://www.youtube.com/tailwindlabs' },
-    ],
-  },
-  {
-    Customization: [
-      { title: 'GitHub', href: 'https://github.com/tailwindlabs/tailwindcss' },
-      { title: 'Discord', href: '/discord' },
-      { title: 'Twitter', href: 'https://twitter.com/tailwindcss' },
-      { title: 'YouTube', href: 'https://www.youtube.com/tailwindlabs' },
-    ],
-    Community: [
-      { title: 'GitHub', href: 'https://github.com/tailwindlabs/tailwindcss' },
-      { title: 'Discord', href: '/discord' },
-      { title: 'Twitter', href: 'https://twitter.com/tailwindcss' },
-      { title: 'YouTube', href: 'https://www.youtube.com/tailwindlabs' },
-    ],
-  },
+  // {
+  //   'Getting Started': [
+  //     { title: 'GitHub', href: 'https://github.com/tailwindlabs/tailwindcss' },
+  //     { title: 'Discord', href: '/discord' },
+  //     { title: 'Twitter', href: 'https://twitter.com/tailwindcss' },
+  //     { title: 'YouTube', href: 'https://www.youtube.com/tailwindlabs' },
+  //   ],
+  //   'Core Concepts': [
+  //     { title: 'GitHub', href: 'https://github.com/tailwindlabs/tailwindcss' },
+  //     { title: 'Discord', href: '/discord' },
+  //     { title: 'Twitter', href: 'https://twitter.com/tailwindcss' },
+  //     { title: 'YouTube', href: 'https://www.youtube.com/tailwindlabs' },
+  //   ],
+  // },
+  // {
+  //   Customization: [
+  //     { title: 'GitHub', href: 'https://github.com/tailwindlabs/tailwindcss' },
+  //     { title: 'Discord', href: '/discord' },
+  //     { title: 'Twitter', href: 'https://twitter.com/tailwindcss' },
+  //     { title: 'YouTube', href: 'https://www.youtube.com/tailwindlabs' },
+  //   ],
+  //   Community: [
+  //     { title: 'Discord', href: '/discord' },
+  //     { title: 'Twitter', href: 'https://twitter.com/tailwindcss' }
+  //   ],
+  // },
 ]
 
 export function Footer() {

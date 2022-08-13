@@ -48,6 +48,10 @@ export default function App({ Component, pageProps, router }) {
     }
   }, [navIsOpen])
 
+  useEffect(() => {
+    localStorage.setItem('theme', 'dark')
+  }, [])
+
   const Layout = Component.layoutProps?.Layout || Fragment
   const layoutProps = Component.layoutProps?.Layout
     ? { layoutProps: Component.layoutProps, navIsOpen, setNavIsOpen }
