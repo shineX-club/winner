@@ -69,7 +69,7 @@ export default function App({ Component, pageProps, router }) {
   return (
     <>
       <Head>
-        <title>Winner</title>
+        <title>Winner - A Smart Contract Powered NFT Gambling Platform</title>
         <meta name="description" content="A Smart Contract Powered NFT Gambling Platform"></meta>
         <meta name="keywords" content="crypto,bet,gamble,nft,contract,web3,eth"></meta>
       </Head>
