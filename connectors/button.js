@@ -40,6 +40,6 @@ export default function ConnectorButton() {
   }, [])
 
   return <>
-    <button onClick={login}>Connect Wallet</button>
+    <button onClick={account ? logout : login}>{account ? 'Disconnect' : 'Connect Wallet'}</button>
   </>
 }
