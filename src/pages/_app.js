@@ -8,6 +8,7 @@ import ProgressBar from '@badrap/bar-of-progress'
 import Head from 'next/head'
 import { ResizeObserver } from '@juggle/resize-observer'
 import 'intersection-observer'
+import WalletProvider from '../../connectors/wallet'
 
 if (typeof window !== 'undefined' && !('ResizeObserver' in window)) {
   window.ResizeObserver = ResizeObserver
@@ -67,7 +68,7 @@ export default function App({ Component, pageProps, router }) {
     )?.[0]
 
   return (
-    <>
+    <WalletProvider>
       <Head>
         <title>Winner</title>
         <meta name="description" content="A Smart Contract Powered NFT Gambling Platform"></meta>
@@ -85,6 +86,6 @@ export default function App({ Component, pageProps, router }) {
       <Layout {...layoutProps}>
         <Component section={section} {...pageProps} />
       </Layout>
-    </>
+    </WalletProvider>
   )
 }

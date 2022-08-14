@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import Router from 'next/router'
 import { Logo } from '@/components/Logo'
-import { Dialog } from '@headlessui/react'
+import ConnectorButton from '../../connectors/button'
 import { useEffect, useState } from 'react'
 import clsx from 'clsx'
 
@@ -134,15 +134,11 @@ export function Header({ hasNav = false, navIsOpen, onNavToggle, title, section 
                   </ul>
                 </nav>
                 <div className="flex items-center border-l border-slate-200 ml-6 pl-6 dark:border-slate-800">
-                  <button>
-                    Wallet Connect
-                  </button>
+                  {ConnectorButton()}
                 </div>
               </div>
               <div className='ml-auto lg:hidden'>
-                <button>
-                  Wallet Connect
-                </button>
+                {ConnectorButton()}
               </div>
             </div>
           </div>

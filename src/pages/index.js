@@ -5,6 +5,7 @@ import NextLink from 'next/link'
 import { NavItems } from '@/components/Header'
 import styles from './index.module.css'
 import clsx from 'clsx'
+import ConnectorButton from '../../connectors/button'
 
 function Header() {
   return (
@@ -28,9 +29,7 @@ function Header() {
           <Logo className="w-auto h-5" />
           <div className="flex items-center">
             <div className='md:hidden'>
-              <button>
-                Wallet Connect
-              </button>
+              {ConnectorButton()}
             </div>
             <div className="hidden md:flex items-center">
               <nav>
@@ -39,9 +38,7 @@ function Header() {
                 </ul>
               </nav>
               <div className="flex items-center border-l border-slate-200 ml-6 pl-6 dark:border-slate-800">
-                <button>
-                  Wallet Connect
-                </button>
+              {ConnectorButton()}
               </div>
             </div>
           </div>
