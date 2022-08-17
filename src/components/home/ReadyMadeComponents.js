@@ -41,7 +41,7 @@ export function ReadyMadeComponents() {
     <section id="ready-made-components">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
         <BigText>
-          <Widont>Move even faster with Tailwind UI.</Widont>
+          <Widont>How does it work?</Widont>
         </BigText>
         <Paragraph>
           Tailwind UI is a collection of beautiful, fully responsive UI components, designed and

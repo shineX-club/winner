@@ -40,6 +40,13 @@ export default function ConnectorButton() {
   }, [])
 
   return <>
-    <button onClick={account ? logout : login}>{account ? 'Disconnect' : 'Connect Wallet'}</button>
+    <button style={{
+      background: 'linear-gradient(110deg,#4ec0d6,#c7b2c7 65%,#ff6f84)',
+      padding: '0 20px',
+      borderRadius: '14px',
+      height: '40px',
+      color: '#000',
+      fontWeight: '700'
+    }} onClick={account ? logout : login}>{account ? 'Disconnect' : 'Connect Wallet'}</button>
   </>
 }

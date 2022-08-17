@@ -7,6 +7,8 @@ import Router from 'next/router'
 import ProgressBar from '@badrap/bar-of-progress'
 import Head from 'next/head'
 import { ResizeObserver } from '@juggle/resize-observer'
+import { ToastContainer } from 'react-toastify'
+import 'react-toastify/dist/ReactToastify.css'
 import 'intersection-observer'
 import WalletProvider from '../../connectors/wallet'
 
@@ -86,6 +88,12 @@ export default function App({ Component, pageProps, router }) {
       <Layout {...layoutProps}>
         <Component section={section} {...pageProps} />
       </Layout>
+      <ToastContainer
+        theme='dark'
+        autoClose={5000}
+        position="top-right"
+        hideProgressBar
+      />
     </WalletProvider>
   )
 }

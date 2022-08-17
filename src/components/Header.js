@@ -45,6 +45,13 @@ export function NavItems() {
   return (
     <>
       <li>
+        <Link href="/spaces">
+          <a className="hover:text-sky-500 dark:hover:text-sky-400">
+            Spaces
+          </a>
+        </Link>
+      </li>
+      <li>
         <a href="/" className="hover:text-sky-500 dark:hover:text-sky-400">
           Etherscan
         </a>
