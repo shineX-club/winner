@@ -1,11 +1,13 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useWeb3React } from '@web3-react/core'
-import { contract } from 'connectors/contract'
+import { useRouter } from 'next/router'
+import { contract, CONTRACT_ADDRESS } from 'connectors/contract'
 import { ethers } from 'ethers'
 import { toast } from 'react-toastify'
 import { $fetch } from 'ohmyfetch'
 import { groupBy } from 'lodash-es'
 import { Steps } from 'rsuite'
+import ERC721ABI from '../../ABI-ERC721.json'
 
 const pad = (number) => {
   if (String(number).length === 1) {
@@ -24,6 +26,8 @@ const convertDate = (ts) => {
 }
 
 export default function Create() {
+  const router = useRouter()
+  const { id, step } = router.query
   const { account, provider } = useWeb3React()
   const [config, setConfig] = useState({
     minFundraisingAmount: 200,
@@ -33,8 +37,9 @@ export default function Create() {
     minCounterpartyBid: 1,
     maxCounterpartyBid: 100,
   })
-  const [current, setCurrent] = useState(0)
+  const [current, setCurrent] = useState(1)
   const [nfts, setNFTs] = useState([])
+  const [selected, setSelected] = useState([])
 
   const createGamble = async () => {
     if (!account) {
@@ -63,23 +68,94 @@ export default function Create() {
 
     const receipt = await tx.wait();
     console.log("receipt", receipt);
+    router.replace(`/create?id=${receipt.events[0].args.id.toString()}&step=2`)
+    setCurrent(2)
+  }
 
-    setCurrent(1)
-    const allData = await getMyNFTs()
+  const initNFTs = async () => {
+    const getMyNFTs = async (result, cursor) => {
+      result = result ?? []
+      const data = await $fetch(`https://testnets-api.opensea.io/api/v1/assets?owner=${account}&limit=50&cursor=${cursor || ''}`)
+      result = result.concat(data.assets)
+  
+      if (data.next) {
+        result = await getMyNFTs(result, data.next)
+      }
+  
+      return result
+    }
+    const allData = (await getMyNFTs())
+      .filter(_ => _.asset_contract.schema_name === 'ERC721')
+      // .filter(_ => _.creator.config === 'verified')
     setNFTs(groupBy(allData, (item) => item.asset_contract.address))
   }
 
-  const getMyNFTs = async (result, cursor) => {
-    result = result ?? []
-    const data = await $fetch(`https://testnets-api.opensea.io/api/v1/assets?owner=${account}&limit=50&cursor=${cursor || ''}`)
-    result = result.concat(data.assets)
+  const appendNFT = async (nft, collectionAddress) => {
+    console.log('nft', nft)
+    const contract = new ethers.Contract(nft.asset_contract.address, ERC721ABI)
+    const newContract = contract.connect(provider.getSigner())
+    const gameId = ethers.utils.hexZeroPad(ethers.utils.hexlify(Number(id)), 32)
+    console.log('arguments', account, CONTRACT_ADDRESS, nft.token_id, gameId)
+    const gas = await newContract.estimateGas["safeTransferFrom(address,address,uint256,bytes)"](account, CONTRACT_ADDRESS, nft.token_id, gameId)
+    console.log('gas', gas)
+    const tx = await newContract["safeTransferFrom(address,address,uint256,bytes)"](account, CONTRACT_ADDRESS, nft.token_id, gameId)
+    console.log('tx', tx)
+    const receipt = await tx.wait()
+    console.log("receipt", receipt)
+    const tempArr = nfts[collectionAddress]
+    const index = tempArr.findIndex(_ => _.id === nft.id)
+    tempArr.splice(index, 1)
+    setNFTs({
+      ...nfts,
+      collectionAddress: tempArr
+    })
+    setSelected(selected.concat(nft))
+  }
 
-    if (data.next) {
-      result = await getMyNFTs(result, data.next)
+  const getGame = async () => {
+    console.log('getGame', id)
+    const newContract = contract.connect(provider.getSigner())
+    const result = await newContract.getGamblingStatus(id)
+    console.log(result)
+    const selectedNFTs = result.collections.map(_ => {
+      return {
+        address: _.contractAddress,
+        tokenId: _.tokenId.toString(),
+        count: Number(_.amount.toString())
+      }
+    })
+    console.log('selectedNFTs', selectedNFTs)
+    if (selectedNFTs.length) {
+      const getSelectedNFT = async (address, token_id) => {
+        const data = await $fetch(`https://testnets-api.opensea.io/api/v1/assets?asset_contract_address=${address}&token_ids=${token_id}`)
+        return data.assets[0]
+      }
+
+      const selected = await Promise.all(selectedNFTs.map(_ => getSelectedNFT(_.address, _.tokenId)))
+      console.log('selected', selected)
+      setSelected(selected)
+    }
+  }
+
+  useEffect(() => {
+    setCurrent(Number(step || 0))
+  }, [step])
+
+  useEffect(() => {
+    if (!provider || !account || current !== 2) {
+      return
     }
 
-    return result
-  }
+    initNFTs()
+  }, [provider, account, current])
+
+  useEffect(() => {
+    if (!provider || !account || !id) {
+      return
+    }
+
+    getGame()
+  }, [provider, account, id])
 
   return <>
     <main className="max-w-[52rem] mx-auto px-4 pb-28 sm:px-6 md:px-8 xl:px-12 lg:max-w-6xl">
@@ -89,7 +165,7 @@ export default function Create() {
           <div className="md:col-span-1">
             <div className="px-4 sm:px-0">
               <h3 className="text-lg font-medium leading-6">Create Gamble</h3>
-              <Steps current={current} vertical>
+              <Steps current={current - 1} vertical>
                 <Steps.Item title="Deploy Contract" description="Description" />
                 <Steps.Item title="Append NFTs" description="Description" />
               </Steps>
@@ -99,7 +175,7 @@ export default function Create() {
           <div className="mt-5 md:mt-0 md:col-span-2">
             <div className="shadow sm:rounded-md sm:overflow-hidden">
               {
-                current === 0 && <>
+                current === 1 && <>
                   <div className="px-4 py-5 bg-white space-y-6 sm:p-6">
                     <div>
                       <div className="col-span-3 sm:col-span-2">
@@ -233,9 +309,32 @@ export default function Create() {
                 </>
               }
               {
-                current === 1 && <>
+                current === 2 && <>
                   <div className="px-4 py-5 bg-white space-y-6 sm:p-6">
-                    nft lists
+                    <p>Support ERC721 Only, Support ETH(mainnet) Only</p>
+                    {
+                      selected.length && <div className='nft-container'>
+                        {
+                          selected.map(item => <div key={item.id} className='nft-wrap'>
+                            <img className='nft-img' src={item.image_url} />
+                            <p className='nft-name'>{item.collection.name}：{item.name}</p>
+                          </div>)
+                        }
+                      </div>
+                    }
+                    {
+                      nfts && Object.keys(nfts).map(address => <div className='nft-container' key={address}>
+                        <p className='nft-title'>{nfts[address][0].collection.name}</p>
+                        <div className='nft-list'>
+                          {
+                            nfts[address].map(item => <div className='nft-wrap' key={item.id} onClick={() => appendNFT(item, address)}>
+                              <img className='nft-img' src={item.image_url} />
+                              <p className='nft-name'>{item.name}</p>
+                            </div>)
+                          }
+                        </div>
+                      </div>)
+                    }
                   </div>
                 </>
               }
