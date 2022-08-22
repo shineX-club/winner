@@ -1,4 +1,5 @@
 @tailwind base;
+@enable-css-reset: false;
 
 .dark {
   color-scheme: dark;

@@ -1,0 +1,24 @@
+.nft-container {
+  .nft-title {
+
+  }
+
+  .nft-list {
+    display: flex;
+    flex-wrap: wrap;
+  }
+
+  .nft-wrap {
+    width: 150px;
+    height: 150px;
+    margin: 10px;
+  }
+
+  .nft-img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    background-color: #fff;
+  }
+}
