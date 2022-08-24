@@ -13,6 +13,59 @@ import "hardhat/console.sol";
 
 pragma solidity ^0.8.7;
 
+
+error ErrInvalidRecord();
+error ErrInvalidContract();
+error ErrRecordLocked();
+error ErrTooManyItems();
+error ErrRecordExists();
+error ErrConvertFailed();
+error ErrInvalidArguments(string name);
+error ErrCreatorCanNotJoin();
+error ErrFundraisingNotStarted();
+error ErrToolittleMoney();
+error ErrFundraisingFinished();
+error ErrNoPermission();
+error ErrGamblingExpired();
+error ErrGamblingFinished();
+error ErrFundraisingNotCompleted();
+error ErrGamblingFeeRequired();
+error ErrGamblingIsProcessing();
+error ErrRequestIdExists();
+error ErrInsufficientFunds();
+error ErrInvalidCall();
+
+/**
+ * @title OnChainRandom
+ * @author storyicon
+ */
+contract OnChainRandom {
+    uint256 private _seed;
+
+    /**
+     * @notice unsafeRandom is used to generate a random number by on-chain randomness. 
+     * Please note that on-chain random is potentially manipulated by miners, and most scenarios suggest using VRF.
+     * @return randomly generated number.
+     */
+    function _unsafeRandom() internal returns (uint256) {
+    unchecked {
+        _seed++;
+        return uint256(keccak256(abi.encodePacked(
+                blockhash(block.number - 1),
+                block.difficulty,
+                block.timestamp,
+                block.coinbase,
+                _seed,
+                tx.origin
+            )));
+    }
+    }
+}
+
+/**
+ * @title OnChainRandom
+ * @author storyicon
+ */
 contract GamblingETHStorage {
     event ETHItemAdded(uint256 indexed id, address account, uint256 amount);
     struct ETHStorageRecord {
@@ -23,14 +76,26 @@ contract GamblingETHStorage {
     }
     mapping(uint256 => ETHStorageRecord) _ETHStorageRecords;
 
+    /**
+     * @notice getETHItem is used to get the ETHItem of the given id.
+     * @param id_ gambling id
+     * @param account_ account to query
+     * @return amount of ETH stored in this gambling
+     */
     function getETHItem(uint256 id_, address account_) public view returns (uint256) {
         return _ETHStorageRecords[id_].items[account_];
     }
 
-    function addETHItem(uint256 id_, address account_, uint256 amount_) internal {
-        require(amount_ > 0, "zero amount");
+    /**
+     * @notice _addETHItem is used to add an ETHItem to the pool.
+     * @param id_ gambling id
+     * @param account_ source of funds
+     * @param amount_ amount of funds
+     */
+    function _addETHItem(uint256 id_, address account_, uint256 amount_) internal {
+        if (amount_ == 0) revert ErrToolittleMoney();
         ETHStorageRecord storage record = _ETHStorageRecords[id_];
-        require(!record.tombstone, "invalid storage record");
+        if (record.tombstone) revert ErrInvalidRecord();
         if (record.items[account_] == 0) {
             record.addresses.push(account_);
         }
@@ -39,26 +104,55 @@ contract GamblingETHStorage {
         emit ETHItemAdded(id_, account_, amount_);
     }
 
-    function clearETHItem(uint256 id_, address account_) internal {
-        ETHStorageRecord storage record = _ETHStorageRecords[id_];
-        record.items[account_] = 0;
-    }
-
-    function withdrawETHItem(uint256 id_, address account_) internal {
-        ETHStorageRecord storage record = _ETHStorageRecords[id_];
-        require(!record.tombstone, "invalid record");
-        uint256 amount = record.items[account_];
-        require(amount > 0, "amount is zero");
-        record.items[account_] = 0;
+    /**
+     * @notice _withdrawETHItem is used to withdraw eth from the pool.
+     * @param id_ gambling id
+     * @param account_ account
+     */
+    function _withdrawETHItem(uint256 id_, address account_) internal {
+        uint256 amount = _getWithdrawableETH(id_, account_);
+        if (amount == 0) revert ErrInsufficientFunds();
+        _ETHStorageRecords[id_].items[account_] = 0;
         payable(account_).transfer(amount);
     }
 
-    function clearETHStorageRecord(uint256 id_) internal {
+    /**
+     * @notice _getWithdrawableETH is used to get the amount of withdrawable ETH from the pool.
+     * @param id_ gambling id
+     * @param account_ account
+     */
+    function _getWithdrawableETH(uint256 id_, address account_) internal view returns (uint256) {
+        ETHStorageRecord storage record = _ETHStorageRecords[id_];
+        if (record.tombstone) {
+            return 0;
+        }
+        return record.items[account_];
+    }
+
+    /**
+     * @notice _clearETHItem is used to clear the eth in ETHItem.
+     * @param id_ gambling id
+     * @param account_ account
+     */
+    function _clearETHItem(uint256 id_, address account_) internal {
+        ETHStorageRecord storage record = _ETHStorageRecords[id_];
+        record.items[account_] = 0;
+    }
+
+    /**
+     * @notice _clearETHStorageRecord is used to clear the eth in _ETHStorageRecords.
+     * @param id_ gambling id
+     */
+    function _clearETHStorageRecord(uint256 id_) internal {
         ETHStorageRecord storage record = _ETHStorageRecords[id_];
         record.tombstone = true;
     }
 }
 
+/**
+ * @title GamblingNFTStorage
+ * @author storyicon
+ */
 contract GamblingNFTStorage is IERC721Receiver, IERC1155Receiver {
     event NFTItemAdded(uint256 indexed id);
     enum ContractType {
@@ -74,68 +168,42 @@ contract GamblingNFTStorage is IERC721Receiver, IERC1155Receiver {
     }
     struct NFTStorageRecord {
         NFTItem[] items;
-        address creator;
-        bool tombstone;
+        address owner;
+        bool locked;
     }
     uint256 public MaxNFTStorageRecordItems = 5;
     mapping(uint256 => NFTStorageRecord) _NFTStorageRecords;
 
+    /**
+     * @notice getNFTStorageRecord is used to get the NFTStorageRecord of given id.
+     * @param id_ gambling id
+     * @return NFTStorageRecord
+     */
     function getNFTStorageRecord(uint256 id_) public view returns (NFTStorageRecord memory) {
         return _NFTStorageRecords[id_];
     }
 
-    function addNFTItem(uint256 id_, address account_, NFTItem memory item_) internal {
-        NFTStorageRecord storage record = _NFTStorageRecords[id_];
-        require(!record.tombstone, "invalid record");
-        require(record.creator == account_, "not record owner");
-        require(record.items.length <= MaxNFTStorageRecordItems, "too many items");
-        record.items.push(item_);
-    }
-
-    function _transfer(NFTItem storage item_, address account_) internal {
-        if (item_.contractType == ContractType.ERC721) {
-            IERC721(item_.contractAddress).safeTransferFrom(address(this), account_, item_.tokenId);
-        } else if (item_.contractType == ContractType.ERC1155) {
-            IERC1155(item_.contractAddress).safeTransferFrom(address(this), account_, item_.tokenId, item_.amount, "");
-        }
-    }
-
-    function withdrawNFTItem(uint256 id_, address account_, uint256 index_) internal {
-        NFTStorageRecord storage record = _NFTStorageRecords[id_];
-        require(!record.tombstone, "invalid record");
-        NFTItem storage item = record.items[index_];
-        require(!item.tombstone, "invalid item");
-        item.tombstone = true;
-        _transfer(item, account_);
-    }
-
-    function withdrawNFTItems(uint256 id_, address account_) internal {
-        NFTStorageRecord storage record = _NFTStorageRecords[id_];
-        require(!record.tombstone, "invalid record");
-        record.tombstone = true;
-        for (uint256 i = 0; i < record.items.length; i++) {
-            NFTItem storage item = record.items[i];
-            if (!item.tombstone) {
-                _transfer(item, account_);
-            }
-        }
-    }
-
-    function createNFTStorageRecord(uint256 id_, address account_) internal {
-        NFTStorageRecord storage record = _NFTStorageRecords[id_];
-        require(record.creator == address(0), "record already exists");
-        record.creator = account_;
-    }
-
+    /**
+     * @notice onERC721Received is a hook function, which is the key to implementing the ERC721-gambling feature.
+     * When the user calls the safeTransferFrom method to transfer the NFT to the current contract, 
+     * onERC721Received will be called, and the nft storage is modified at this time.
+     * data_ is required. Its value should be gamblingId with 64-chars left padding.
+     * For example, if the gamblingId you want to operate is 1, 
+     * then data_ should be "0x0000000000000000000000000000000000000000000000000000000000000001"
+     * If you use JavaScript, you can generate it in this way:
+     * ----------------
+     *   '0x' + web3.utils.padLeft(web3.utils.toHex(`${gamblingId}`).substr(2), 64)
+     * ----------------
+     */
     function onERC721Received(
         address,
         address from_,
         uint256 tokenId_,
         bytes memory data_
     ) public override returns (bytes4) {
-        require(IERC165(msg.sender).supportsInterface(type(IERC721).interfaceId), "invalid contract");
-        uint256 id = toUint256(data_);
-        addNFTItem(id, from_, NFTItem({
+        if (!IERC165(msg.sender).supportsInterface(type(IERC721).interfaceId)) revert ErrInvalidContract();
+        uint256 id = _toUint256(data_);
+        _addNFTItem(id, from_, NFTItem({
             contractType: ContractType.ERC721,
             contractAddress: msg.sender,
             tokenId: tokenId_,
@@ -145,6 +213,18 @@ contract GamblingNFTStorage is IERC721Receiver, IERC1155Receiver {
         return this.onERC721Received.selector;
     }
 
+    /**
+     * @notice onERC1155Received is a hook function, which is the key to implementing the ERC1155-gambling feature.
+     * When the user calls the safeTransferFrom method to transfer the NFT to the current contract, 
+     * onERC1155Received will be called, and the nft storage is modified at this time.
+     * data_ is required. Its value should be gamblingId with 64-chars left padding.
+     * For example, if the gamblingId you want to operate is 1, 
+     * then data_ should be "0x0000000000000000000000000000000000000000000000000000000000000001"
+     * If you use JavaScript, you can generate it in this way:
+     * ----------------
+     *   '0x' + web3.utils.padLeft(web3.utils.toHex(`${gamblingId}`).substr(2), 64)
+     * ----------------
+     */
     function onERC1155Received(
         address,
         address from_,
@@ -152,9 +232,9 @@ contract GamblingNFTStorage is IERC721Receiver, IERC1155Receiver {
         uint256 value_,
         bytes calldata data_
     ) external override returns (bytes4) {
-        require(IERC165(msg.sender).supportsInterface(type(IERC1155).interfaceId), "invalid contract");
-        uint256 id = toUint256(data_);
-        addNFTItem(id, from_, NFTItem({
+        if (!IERC165(msg.sender).supportsInterface(type(IERC1155).interfaceId)) revert ErrInvalidContract();
+        uint256 id = _toUint256(data_);
+        _addNFTItem(id, from_, NFTItem({
             contractType: ContractType.ERC1155,
             contractAddress: msg.sender,
             tokenId: tokenId_,
@@ -164,6 +244,18 @@ contract GamblingNFTStorage is IERC721Receiver, IERC1155Receiver {
         return this.onERC1155Received.selector;
     }
 
+    /**
+     * @notice onERC1155BatchReceived is a hook function, which is the key to implementing the ERC1155-gambling feature.
+     * When the user calls the safeBatchTransferFrom method to transfer the NFT to the current contract, 
+     * onERC1155BatchReceived will be called, and the nft storage is modified at this time.
+     * data_ is required. Its value should be gamblingId with 64-chars left padding.
+     * For example, if the gamblingId you want to operate is 1, 
+     * then data_ should be "0x0000000000000000000000000000000000000000000000000000000000000001"
+     * If you use JavaScript, you can generate it in this way:
+     * ----------------
+     *   '0x' + web3.utils.padLeft(web3.utils.toHex(`${gamblingId}`).substr(2), 64)
+     * ----------------
+     */
     function onERC1155BatchReceived(
         address,
         address from_,
@@ -171,11 +263,11 @@ contract GamblingNFTStorage is IERC721Receiver, IERC1155Receiver {
         uint256[] calldata values_,
         bytes calldata data_
     ) external override returns (bytes4) {
-        require(IERC165(msg.sender).supportsInterface(type(IERC1155).interfaceId), "invalid contract");
-        require(ids_.length == values_.length, "invalid ids and values");
-        uint256 id = toUint256(data_);
+        if (!IERC165(msg.sender).supportsInterface(type(IERC1155).interfaceId)) revert ErrInvalidContract();
+        if (ids_.length != values_.length) revert ErrInvalidArguments("ids_ and values_");
+        uint256 id = _toUint256(data_);
         for (uint256 i = 0; i < ids_.length; i++) {
-            addNFTItem(id, from_, NFTItem({
+            _addNFTItem(id, from_, NFTItem({
                 contractType: ContractType.ERC1155,
                 contractAddress: msg.sender,
                 tokenId: ids_[i],
@@ -186,23 +278,106 @@ contract GamblingNFTStorage is IERC721Receiver, IERC1155Receiver {
         return this.onERC1155BatchReceived.selector;
     }
 
-    function toUint256(bytes memory bs_) internal pure returns (uint256) {
-        require(bs_.length >= 32, "uint256 convert failed");
-        uint256 ret;
-        assembly {
-            ret := mload(add(add(bs_, 0x20), 0))
-        }
-        return ret;
-    }
-
+    /**
+     * @notice Implemented the ERC165 standard.
+     */
     function supportsInterface(bytes4 interfaceId) external override pure returns (bool) {
         return
             interfaceId == type(IERC721Receiver).interfaceId ||
             interfaceId == type(IERC1155Receiver).interfaceId;
     }
+
+    /**
+     * @notice _addETHItem is used to add an NFTItem into the pool.
+     * @param id_ gambling id
+     * @param account_ account
+     * @param item_ NFTItem
+     */
+    function _addNFTItem(uint256 id_, address account_, NFTItem memory item_) internal {
+        NFTStorageRecord storage record = _NFTStorageRecords[id_];
+        if (record.locked) revert ErrRecordLocked();
+        if (record.owner != account_) revert ErrNoPermission();
+        if (record.items.length > MaxNFTStorageRecordItems) revert ErrTooManyItems();
+        record.items.push(item_);
+    }
+
+    /**
+     * @notice _withdrawNFTItem is used to withdraw an NFTItem from the pool.
+     * @param id_ gambling id
+     * @param account_ account
+     * @param index_ NFTItem index
+     */
+    function _withdrawNFTItem(uint256 id_, address account_, uint256 index_) internal {
+        NFTStorageRecord storage record = _NFTStorageRecords[id_];
+        NFTItem storage item = record.items[index_];
+        if (item.tombstone) revert ErrInvalidRecord();
+        item.tombstone = true;
+        _transfer(item, account_);
+    }
+
+    /**
+     * @notice _withdrawNFTItems is used to withdraw NFTItems from the pool.
+     * @param id_ gambling id
+     * @param account_ account
+     */
+    function _withdrawNFTItems(uint256 id_, address account_) internal {
+        NFTStorageRecord storage record = _NFTStorageRecords[id_];
+        bool affected = false;
+        for (uint256 i = 0; i < record.items.length; i++) {
+            NFTItem storage item = record.items[i];
+            if (!item.tombstone) {
+                affected = true;
+                item.tombstone = true;
+                _transfer(item, account_);
+            }
+        }
+        if (!affected) revert ErrInvalidCall();
+    }
+
+    /**
+     * @notice _createNFTStorageRecord is used to create NFTStorageRecord
+     * @param id_ gambling id
+     * @param account_ owner of created NFTStorageRecord
+     */
+    function _createNFTStorageRecord(uint256 id_, address account_) internal {
+        NFTStorageRecord storage record = _NFTStorageRecords[id_];
+        if (record.owner != address(0)) revert ErrRecordExists();
+        record.owner = account_;
+    }
+
+    /**
+     * @notice _transfer is used to transfer NFTItem to specified account.
+     * @param item_ NFTItem to transfer
+     * @param account_ target address
+     */
+    function _transfer(NFTItem storage item_, address account_) internal {
+        if (item_.contractType == ContractType.ERC721) {
+            IERC721(item_.contractAddress).safeTransferFrom(address(this), account_, item_.tokenId);
+        } else if (item_.contractType == ContractType.ERC1155) {
+            IERC1155(item_.contractAddress).safeTransferFrom(address(this), account_, item_.tokenId, item_.amount, "");
+        }
+    }
+
+    /**
+     * @notice convert the given bytes to number.
+     * @param data_ bytes to convert
+     * @return converted number
+     */
+    function _toUint256(bytes memory data_) internal pure returns (uint256) {
+        if (data_.length < 32) revert ErrConvertFailed();
+        uint256 num;
+        assembly {
+            num := mload(add(add(data_, 0x20), 0))
+        }
+        return num;
+    }
 }
 
-contract Gambling is GamblingNFTStorage, GamblingETHStorage, VRFConsumerBaseV2, Ownable {
+/**
+ * @title Gambling
+ * @author storyicon
+ */
+contract Gambling is GamblingNFTStorage, GamblingETHStorage, VRFConsumerBaseV2, OnChainRandom, Ownable {
 
     /***********************************|
     |                VRF                |
@@ -218,8 +393,13 @@ contract Gambling is GamblingNFTStorage, GamblingETHStorage, VRFConsumerBaseV2, 
     }
     VRFConfig private _VRFConfig;
     VRFCoordinatorV2Interface private _VRFCoordinator;
+    // map[requestId]gamblingId
     mapping(uint256 => uint256) private _VRFRecords;
 
+    /**
+     * @notice It is used to request a random number from chainlink VRF
+     * @return request id
+     */
     function requestRandomWords() internal returns (uint256) {
         return _VRFCoordinator.requestRandomWords(
             _VRFConfig.keyHash,
@@ -230,11 +410,16 @@ contract Gambling is GamblingNFTStorage, GamblingETHStorage, VRFConsumerBaseV2, 
         );
     }
 
+    /**
+     * @notice fulfillRandomWords is used to receive the callback request of chainlink VRF.
+     * @param requestId_ request id
+     * @param randomWords random words
+     */
     function fulfillRandomWords(
         uint256 requestId_, /* requestId */
         uint256[] memory randomWords
     ) internal override {
-        require(randomWords.length > 0, "invalid random words");
+        if (randomWords.length == 0) revert ErrInvalidArguments("randomWords");
         uint256 gamblingId = _VRFRecords[requestId_];
         _execGambling(gamblingId, randomWords[0]);
     }
@@ -253,7 +438,9 @@ contract Gambling is GamblingNFTStorage, GamblingETHStorage, VRFConsumerBaseV2, 
     event GamblingExited(uint256 indexed id, address account);
     event GamblingPlayed(uint256 indexed id);
     event GamblingExecuted(uint256 indexed id, uint256 entropy, address winner);
-    event ComissionWithdrawn(address indexed account, uint256 amount);
+    event GamblingComissionWithdrawn(address indexed account, uint256 amount);
+    event GamblingCommissionDenominatorUpdated(uint256 amount);
+    event GamblingFeeUpdated(uint256 amount);
     struct GamblingConfig {
         uint256 minFundraisingAmount;
         uint256 minCounterpartyBid;
@@ -261,39 +448,67 @@ contract Gambling is GamblingNFTStorage, GamblingETHStorage, VRFConsumerBaseV2, 
         uint256 fundraisingStartTime;
         uint256 deadline;
         uint256 initiatorWinProbability;
+        bool chainRandomMode;
     }
     struct GamblingRecord {
-        // 基本配置
         GamblingConfig config;
-        // 发起者
         address creator;
-        // 胜出者
         address winner;
-        // VRF RequestId
         uint256 VRFRequestId;
     }
     struct GamblingStatus {
-        // 基本记录
+        // basic record
         GamblingRecord record;
-        // 对手盘资金总量
+        // the total amount of counterparty funds
         uint256 fundraisingAmount;
-        // 对手盘参与人数
+        // number of counterparties.
         uint256 counterpartyCount;
-        // 发起者押注的物品
+        // NFT staked by the creator.
         NFTItem[] collections;
     }
 
     // gambling storage
-    uint256 internal _gamblingCount;
+    uint256 internal _gamblingId;
     mapping(uint256 => GamblingRecord) private _gamblingRecords;
     // commission storage
-    uint256 commissionDenominator = 10;
-    uint256 commissionPool;
+    uint256 public commissionDenominator = 10;
+    uint256 public commissionPool;
+    // fee
+    uint256 public gammblingFee;
 
+    /**
+     * @notice setCommissionDenominator is used to set the value of commission denominator
+     * @param denominator_ value
+     */
+    function setCommissionDenominator(uint256 denominator_) external onlyOwner {
+        if (denominator_ == 0) revert ErrInvalidArguments("denominator");
+        commissionDenominator = denominator_;
+        emit GamblingCommissionDenominatorUpdated(denominator_);
+    }
+
+    /**
+     * @notice setCommissionDenominator is used to set the value of gambling fee
+     * @param fee_ gambling fee
+     */
+    function setGamblingFee(uint256 fee_) external onlyOwner {
+        gammblingFee = fee_;
+        emit GamblingFeeUpdated(fee_);
+    }
+
+    /**
+     * @notice getGamblingRecord is used to get the gamblind record.
+     * @param id_ gambling id
+     * @return gambling record
+     */
     function getGamblingRecord(uint256 id_) public view returns (GamblingRecord memory) {
         return _gamblingRecords[id_];
     }
 
+    /**
+     * @notice getGamblingStatus is used to get the gamblind status.
+     * @param id_ gambling id
+     * @return gambling status
+     */
     function getGamblingStatus(uint256 id_) public view returns (GamblingStatus memory) {
         ETHStorageRecord storage ethStorageRecord = _ETHStorageRecords[id_];
         NFTStorageRecord storage nftStorageRecord = _NFTStorageRecords[id_];
@@ -305,81 +520,164 @@ contract Gambling is GamblingNFTStorage, GamblingETHStorage, VRFConsumerBaseV2, 
         });
     }
 
+    /**
+     * @notice getGamblingCount is used to get the total amount of gambling created.
+     * @return the total amount of gambling.
+     */
     function getGamblingCount() public view returns (uint256) {
-        return _gamblingCount;
+        return _gamblingId;
     }
 
+    /**
+     * @notice createGambling is used to create gambling.
+     * @param config_ the config of gambling.
+     */
     function createGambling(GamblingConfig calldata config_) external {
-        require(config_.deadline > block.timestamp, "deadline is invalid");
-        require(config_.initiatorWinProbability > 0 && config_.initiatorWinProbability < 10000, "initiatorWinProbability is invalid");
-        require(config_.minFundraisingAmount > 0, "minFundraisingAmount is required");
-        _gamblingCount++;
-        _gamblingRecords[_gamblingCount] = GamblingRecord({
+        if (config_.deadline <= block.timestamp) revert ErrInvalidArguments("deadline");
+        if (config_.initiatorWinProbability == 0 || config_.initiatorWinProbability >= 10000) revert ErrInvalidArguments("initiatorWinProbability");
+        if (config_.minFundraisingAmount == 0) revert ErrInvalidArguments("minFundraisingAmount");
+        _gamblingId++;
+        _gamblingRecords[_gamblingId] = GamblingRecord({
             creator: msg.sender,
             config: config_,
             winner: address(0),
             VRFRequestId: 0
         });
-        createNFTStorageRecord(_gamblingCount, msg.sender);
-        emit GamblingCreated(_gamblingCount, msg.sender);
+        _createNFTStorageRecord(_gamblingId, msg.sender);
+        emit GamblingCreated(_gamblingId, msg.sender);
     }
 
+    /**
+     * @notice joinGambling is used to join gambling.
+     * @param id_ gambling id.
+     */
     function joinGambling(uint256 id_) external payable {
         GamblingRecord memory gambling = _gamblingRecords[id_];
-        require(gambling.creator != msg.sender, "creator can not join");
-        require(gambling.config.fundraisingStartTime <= block.timestamp, "fundraising is not started");
-        require(gambling.config.minFundraisingAmount <= msg.value, "too little money");
-        require(gambling.config.deadline > block.timestamp, "fundraising finished");
-        addETHItem(id_, msg.sender, msg.value);
+        if (gambling.creator == msg.sender) revert ErrCreatorCanNotJoin();
+        if (gambling.config.fundraisingStartTime > block.timestamp) revert ErrFundraisingNotStarted();
+        if (msg.value < gambling.config.minFundraisingAmount) revert ErrToolittleMoney();
+        if (gambling.config.deadline <= block.timestamp) revert ErrFundraisingFinished();
+        _addETHItem(id_, msg.sender, msg.value);
         emit GamblingJoined(id_, msg.sender);
     }
 
-    function exitGambling(uint256 id_) external {
+    /**
+     * @notice isClaimGamblingETHAllowed is used to check whether withdrawal of ETH is allowed.
+     * @param id_ gambling id.
+     * @return whether withdrawal of ETH is allowed
+     */
+    function isClaimGamblingETHAllowed(uint256 id_) public view returns (bool) {
         GamblingRecord memory gambling = _gamblingRecords[id_];
-        if (gambling.winner != address(0)) {
-            if (gambling.winner != gambling.creator) {
-                if (msg.sender != gambling.winner) {
-                    withdrawETHItem(id_, msg.sender);     
-                    return;
-                }
-            }
-        } else {
-            if (gambling.config.deadline < block.timestamp) {
-                if (gambling.creator == msg.sender) {
-                    withdrawNFTItems(id_, msg.sender);
-                } else {
-                    withdrawETHItem(id_, msg.sender);            
-                }
-                emit GamblingExited(id_, msg.sender);
-                return;
+        // When the game has been successfully completed and the participants have won, 
+        // the participants who have not won can use this function to refund the participation money.
+        bool c0 = (gambling.winner != address(0)) && 
+                  (gambling.winner != gambling.creator) && 
+                  (gambling.winner != msg.sender) &&
+                  (msg.sender != gambling.creator);
+        // When the game has expired, any participant can withdraw their eth.
+        bool c1 = _isGamblingAborted(id_) && 
+                  (msg.sender != gambling.creator);
+        if (c0 || c1) {
+            if (_getWithdrawableETH(id_, msg.sender) > 0) {
+                return true;
             }
         }
-        revert("invalid call");
+        return false;
     }
 
-    function playGambling(uint256 id_) external {
+    /**
+     * @notice claimGamblingETH is used to claim gambling eth.
+     * @param id_ gambling id.
+     */
+    function claimGamblingETH(uint256 id_) external {
+        bool ok = isClaimGamblingETHAllowed(id_);
+        if (ok) {
+            _withdrawETHItem(id_, msg.sender);     
+            return;
+        }
+        revert ErrInvalidCall();
+    }
+
+    /**
+     * @notice isClaimGamblingNFTAllowed is used to check whether withdrawal of NFT is allowed.
+     * @param id_ gambling id.
+     * @return whether withdrawal of NFT is allowed
+     */
+    function isClaimGamblingNFTAllowed(uint256 id_) public view returns (bool) {
+        GamblingRecord memory gambling = _gamblingRecords[id_];
+        // When the game has been successfully completed, the winner can withdraw the NFT.
+        bool s0 = (gambling.winner != address(0)) && (msg.sender == gambling.winner);
+        // When the game has expired, the game creator can withdraw the NFT.
+        bool s1 = _isGamblingAborted(id_) && (msg.sender == gambling.creator);
+        return (s0 || s1);
+    }
+
+    /**
+     * @notice claimGamblingETH is used to claim gambling NFTs.
+     * @param id_ gambling id.
+     */
+    function claimGamblingNFTs(uint256 id_) external {
+        if (isClaimGamblingNFTAllowed(id_)) {
+            _withdrawNFTItems(id_, msg.sender);
+        }
+    }
+
+    /**
+     * @notice claimGamblingETH is used to claim gambling NFT.
+     * @param id_ gambling id.
+     * @param index_ the index of NFTItem to claim.
+     */
+    function claimGamblingNFT(uint256 id_, uint256 index_) external {
+        _withdrawNFTItem(id_, msg.sender, index_);
+    }
+
+    /**
+     * @notice _isGamblingAborted is used to check whether the gambling is aborted.
+     * @param id_ gambling id.
+     * @return whether the gambling is aborted.
+     */
+    function _isGamblingAborted(uint256 id_) internal view returns (bool) {
+        GamblingRecord memory gambling = _gamblingRecords[id_];
+        return (gambling.winner == address(0)) &&
+                  (gambling.config.deadline < block.timestamp);
+    }
+
+    /**
+     * @notice playGambling is used to start the core process of gambling.
+     * @param id_ gambling id.
+     */
+    function playGambling(uint256 id_) external payable {
         GamblingRecord storage gambling = _gamblingRecords[id_];
-        require(gambling.creator == msg.sender, "not the initiator");
-        require(gambling.config.deadline > block.timestamp, "gambling has expired");
-        require(gambling.winner == address(0), "gambling already finished");
-        require(gambling.VRFRequestId == 0, "gambling is processing");
-        require(_ETHStorageRecords[id_].accumulateAmount >= gambling.config.minFundraisingAmount, "fundraising not completed");
-        uint256 requestId = requestRandomWords();
-        require(_VRFRecords[requestId] == 0, "requestId exists");
-        gambling.VRFRequestId = requestId;
-        _VRFRecords[requestId] = id_;
+        if (msg.sender != gambling.creator) revert ErrNoPermission();
+        if (gambling.config.deadline <= block.timestamp) revert ErrGamblingExpired();
+        if (gambling.winner != address(0)) revert ErrGamblingFinished();
+        if (_ETHStorageRecords[id_].accumulateAmount < gambling.config.minFundraisingAmount) revert ErrFundraisingNotCompleted();
+        if (gambling.config.chainRandomMode) {
+            _execGambling(id_, _unsafeRandom());
+        } else {
+            if (msg.value < gammblingFee) revert ErrGamblingFeeRequired();
+            if (gambling.VRFRequestId != 0) revert ErrGamblingIsProcessing();
+            uint256 requestId = requestRandomWords();
+            if (_VRFRecords[requestId] != 0) revert ErrRequestIdExists();
+            gambling.VRFRequestId = requestId;
+            _VRFRecords[requestId] = id_;
+        }
         emit GamblingPlayed(id_);
     }
 
+    /**
+     * @notice _execGambling is used to execute the gambling.
+     * @param id_ gambling id.
+     * @param entropy_ entropy value, which determines the final result.
+     */
     function _execGambling(uint256 id_, uint256 entropy_) internal {
         GamblingRecord storage gambling = _gamblingRecords[id_];
         ETHStorageRecord storage ethRecord = _ETHStorageRecords[id_];
-        if (entropy_ % 10000 < gambling.config.initiatorWinProbability) {
+        if (entropy_ % 10000 < gambling.config.initiatorWinProbability) { // initiator win
             uint256 commission = ethRecord.accumulateAmount / commissionDenominator;
             commissionPool += commission;
             payable(gambling.creator).transfer(ethRecord.accumulateAmount - commission);
-            clearETHStorageRecord(id_);
-            withdrawNFTItems(id_, gambling.creator);
+            _clearETHStorageRecord(id_);
             gambling.winner = gambling.creator;
             emit GamblingExecuted(id_, entropy_, gambling.creator);
             return;
@@ -391,21 +689,26 @@ contract Gambling is GamblingNFTStorage, GamblingETHStorage, VRFConsumerBaseV2, 
             uint256 value_ = ethRecord.items[address_];
             step += value_;
             if (point < step) {
-                withdrawNFTItems(id_, address_);
                 commissionPool += value_;
-                clearETHItem(id_, address_);
+                _clearETHItem(id_, address_);
                 gambling.winner = address_;
                 emit GamblingExecuted(id_, entropy_, address_);
                 return;
             }
         }
-        revert("unreachable code");
+        // unreachable code
+        revert ErrInvalidCall();
     }
 
+    /**
+     * @notice withdrawCommission is used to withdraw the commission stored in the contract.
+     * @param account_ account to transfer.
+     * @param amount_ amount to transfer.
+     */
     function withdrawCommission(address account_, uint256 amount_) external onlyOwner {
-        require(commissionPool >= amount_, "pool not enough");
+        if (commissionPool < amount_) revert ErrInsufficientFunds();
         commissionPool -= amount_;
         payable(account_).transfer(amount_);
-        emit ComissionWithdrawn(account_, amount_);
+        emit GamblingComissionWithdrawn(account_, amount_);
     }
 }

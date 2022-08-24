@@ -2,6 +2,100 @@
 	{
 		"inputs": [
 			{
+				"internalType": "uint256",
+				"name": "id_",
+				"type": "uint256"
+			}
+		],
+		"name": "claimGamblingETH",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "id_",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "index_",
+				"type": "uint256"
+			}
+		],
+		"name": "claimGamblingNFT",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "id_",
+				"type": "uint256"
+			}
+		],
+		"name": "claimGamblingNFTs",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"components": [
+					{
+						"internalType": "uint256",
+						"name": "minFundraisingAmount",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "minCounterpartyBid",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "maxCounterpartyBid",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "fundraisingStartTime",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "deadline",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "initiatorWinProbability",
+						"type": "uint256"
+					},
+					{
+						"internalType": "bool",
+						"name": "chainRandomMode",
+						"type": "bool"
+					}
+				],
+				"internalType": "struct Gambling.GamblingConfig",
+				"name": "config_",
+				"type": "tuple"
+			}
+		],
+		"name": "createGambling",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
 				"components": [
 					{
 						"internalType": "uint64",
@@ -43,6 +137,185 @@
 		"type": "constructor"
 	},
 	{
+		"inputs": [],
+		"name": "ErrConvertFailed",
+		"type": "error"
+	},
+	{
+		"inputs": [],
+		"name": "ErrCreatorCanNotJoin",
+		"type": "error"
+	},
+	{
+		"inputs": [],
+		"name": "ErrFundraisingFinished",
+		"type": "error"
+	},
+	{
+		"inputs": [],
+		"name": "ErrFundraisingNotCompleted",
+		"type": "error"
+	},
+	{
+		"inputs": [],
+		"name": "ErrFundraisingNotStarted",
+		"type": "error"
+	},
+	{
+		"inputs": [],
+		"name": "ErrGamblingExpired",
+		"type": "error"
+	},
+	{
+		"inputs": [],
+		"name": "ErrGamblingFeeRequired",
+		"type": "error"
+	},
+	{
+		"inputs": [],
+		"name": "ErrGamblingFinished",
+		"type": "error"
+	},
+	{
+		"inputs": [],
+		"name": "ErrGamblingIsProcessing",
+		"type": "error"
+	},
+	{
+		"inputs": [],
+		"name": "ErrInsufficientFunds",
+		"type": "error"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "name",
+				"type": "string"
+			}
+		],
+		"name": "ErrInvalidArguments",
+		"type": "error"
+	},
+	{
+		"inputs": [],
+		"name": "ErrInvalidCall",
+		"type": "error"
+	},
+	{
+		"inputs": [],
+		"name": "ErrInvalidContract",
+		"type": "error"
+	},
+	{
+		"inputs": [],
+		"name": "ErrInvalidRecord",
+		"type": "error"
+	},
+	{
+		"inputs": [],
+		"name": "ErrNoPermission",
+		"type": "error"
+	},
+	{
+		"inputs": [],
+		"name": "ErrRecordExists",
+		"type": "error"
+	},
+	{
+		"inputs": [],
+		"name": "ErrRecordLocked",
+		"type": "error"
+	},
+	{
+		"inputs": [],
+		"name": "ErrRequestIdExists",
+		"type": "error"
+	},
+	{
+		"inputs": [],
+		"name": "ErrTooManyItems",
+		"type": "error"
+	},
+	{
+		"inputs": [],
+		"name": "ErrToolittleMoney",
+		"type": "error"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			},
+			{
+				"internalType": "address",
+				"name": "from_",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256[]",
+				"name": "ids_",
+				"type": "uint256[]"
+			},
+			{
+				"internalType": "uint256[]",
+				"name": "values_",
+				"type": "uint256[]"
+			},
+			{
+				"internalType": "bytes",
+				"name": "data_",
+				"type": "bytes"
+			}
+		],
+		"name": "onERC1155BatchReceived",
+		"outputs": [
+			{
+				"internalType": "bytes4",
+				"name": "",
+				"type": "bytes4"
+			}
+		],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			},
+			{
+				"internalType": "address",
+				"name": "from_",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "tokenId_",
+				"type": "uint256"
+			},
+			{
+				"internalType": "bytes",
+				"name": "data_",
+				"type": "bytes"
+			}
+		],
+		"name": "onERC721Received",
+		"outputs": [
+			{
+				"internalType": "bytes4",
+				"name": "",
+				"type": "bytes4"
+			}
+		],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
 		"inputs": [
 			{
 				"internalType": "address",
@@ -57,25 +330,6 @@
 		],
 		"name": "OnlyCoordinatorCanFulfill",
 		"type": "error"
-	},
-	{
-		"anonymous": false,
-		"inputs": [
-			{
-				"indexed": true,
-				"internalType": "address",
-				"name": "account",
-				"type": "address"
-			},
-			{
-				"indexed": false,
-				"internalType": "uint256",
-				"name": "amount",
-				"type": "uint256"
-			}
-		],
-		"name": "ComissionWithdrawn",
-		"type": "event"
 	},
 	{
 		"anonymous": false,
@@ -100,6 +354,38 @@
 			}
 		],
 		"name": "ETHItemAdded",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "account",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "amount",
+				"type": "uint256"
+			}
+		],
+		"name": "GamblingComissionWithdrawn",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "amount",
+				"type": "uint256"
+			}
+		],
+		"name": "GamblingCommissionDenominatorUpdated",
 		"type": "event"
 	},
 	{
@@ -169,6 +455,19 @@
 		"anonymous": false,
 		"inputs": [
 			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "amount",
+				"type": "uint256"
+			}
+		],
+		"name": "GamblingFeeUpdated",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
 				"indexed": true,
 				"internalType": "uint256",
 				"name": "id",
@@ -198,6 +497,19 @@
 		"type": "event"
 	},
 	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "id_",
+				"type": "uint256"
+			}
+		],
+		"name": "joinGambling",
+		"outputs": [],
+		"stateMutability": "payable",
+		"type": "function"
+	},
+	{
 		"anonymous": false,
 		"inputs": [
 			{
@@ -209,6 +521,45 @@
 		],
 		"name": "NFTItemAdded",
 		"type": "event"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			},
+			{
+				"internalType": "address",
+				"name": "from_",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "tokenId_",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "value_",
+				"type": "uint256"
+			},
+			{
+				"internalType": "bytes",
+				"name": "data_",
+				"type": "bytes"
+			}
+		],
+		"name": "onERC1155Received",
+		"outputs": [
+			{
+				"internalType": "bytes4",
+				"name": "",
+				"type": "bytes4"
+			}
+		],
+		"stateMutability": "nonpayable",
+		"type": "function"
 	},
 	{
 		"anonymous": false,
@@ -228,6 +579,83 @@
 		],
 		"name": "OwnershipTransferred",
 		"type": "event"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "id_",
+				"type": "uint256"
+			}
+		],
+		"name": "playGambling",
+		"outputs": [],
+		"stateMutability": "payable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "requestId",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256[]",
+				"name": "randomWords",
+				"type": "uint256[]"
+			}
+		],
+		"name": "rawFulfillRandomWords",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "renounceOwnership",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "denominator_",
+				"type": "uint256"
+			}
+		],
+		"name": "setCommissionDenominator",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "fee_",
+				"type": "uint256"
+			}
+		],
+		"name": "setGamblingFee",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "newOwner",
+				"type": "address"
+			}
+		],
+		"name": "transferOwnership",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
 	},
 	{
 		"anonymous": false,
@@ -270,8 +698,26 @@
 		"type": "event"
 	},
 	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "account_",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "amount_",
+				"type": "uint256"
+			}
+		],
+		"name": "withdrawCommission",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
 		"inputs": [],
-		"name": "MaxNFTStorageRecordItems",
+		"name": "commissionDenominator",
 		"outputs": [
 			{
 				"internalType": "uint256",
@@ -283,61 +729,29 @@
 		"type": "function"
 	},
 	{
-		"inputs": [
-			{
-				"components": [
-					{
-						"internalType": "uint256",
-						"name": "minFundraisingAmount",
-						"type": "uint256"
-					},
-					{
-						"internalType": "uint256",
-						"name": "minCounterpartyBid",
-						"type": "uint256"
-					},
-					{
-						"internalType": "uint256",
-						"name": "maxCounterpartyBid",
-						"type": "uint256"
-					},
-					{
-						"internalType": "uint256",
-						"name": "fundraisingStartTime",
-						"type": "uint256"
-					},
-					{
-						"internalType": "uint256",
-						"name": "deadline",
-						"type": "uint256"
-					},
-					{
-						"internalType": "uint256",
-						"name": "initiatorWinProbability",
-						"type": "uint256"
-					}
-				],
-				"internalType": "struct Gambling.GamblingConfig",
-				"name": "config_",
-				"type": "tuple"
-			}
-		],
-		"name": "createGambling",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
+		"inputs": [],
+		"name": "commissionPool",
+		"outputs": [
 			{
 				"internalType": "uint256",
-				"name": "id_",
+				"name": "",
 				"type": "uint256"
 			}
 		],
-		"name": "exitGambling",
-		"outputs": [],
-		"stateMutability": "nonpayable",
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "gammblingFee",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
 		"type": "function"
 	},
 	{
@@ -420,6 +834,11 @@
 								"internalType": "uint256",
 								"name": "initiatorWinProbability",
 								"type": "uint256"
+							},
+							{
+								"internalType": "bool",
+								"name": "chainRandomMode",
+								"type": "bool"
 							}
 						],
 						"internalType": "struct Gambling.GamblingConfig",
@@ -495,6 +914,11 @@
 										"internalType": "uint256",
 										"name": "initiatorWinProbability",
 										"type": "uint256"
+									},
+									{
+										"internalType": "bool",
+										"name": "chainRandomMode",
+										"type": "bool"
 									}
 								],
 								"internalType": "struct Gambling.GamblingConfig",
@@ -618,12 +1042,12 @@
 					},
 					{
 						"internalType": "address",
-						"name": "creator",
+						"name": "owner",
 						"type": "address"
 					},
 					{
 						"internalType": "bool",
-						"name": "tombstone",
+						"name": "locked",
 						"type": "bool"
 					}
 				],
@@ -643,131 +1067,12 @@
 				"type": "uint256"
 			}
 		],
-		"name": "joinGambling",
-		"outputs": [],
-		"stateMutability": "payable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "address",
-				"name": "",
-				"type": "address"
-			},
-			{
-				"internalType": "address",
-				"name": "from_",
-				"type": "address"
-			},
-			{
-				"internalType": "uint256[]",
-				"name": "ids_",
-				"type": "uint256[]"
-			},
-			{
-				"internalType": "uint256[]",
-				"name": "values_",
-				"type": "uint256[]"
-			},
-			{
-				"internalType": "bytes",
-				"name": "data_",
-				"type": "bytes"
-			}
-		],
-		"name": "onERC1155BatchReceived",
+		"name": "isClaimGamblingETHAllowed",
 		"outputs": [
 			{
-				"internalType": "bytes4",
+				"internalType": "bool",
 				"name": "",
-				"type": "bytes4"
-			}
-		],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "address",
-				"name": "",
-				"type": "address"
-			},
-			{
-				"internalType": "address",
-				"name": "from_",
-				"type": "address"
-			},
-			{
-				"internalType": "uint256",
-				"name": "tokenId_",
-				"type": "uint256"
-			},
-			{
-				"internalType": "uint256",
-				"name": "value_",
-				"type": "uint256"
-			},
-			{
-				"internalType": "bytes",
-				"name": "data_",
-				"type": "bytes"
-			}
-		],
-		"name": "onERC1155Received",
-		"outputs": [
-			{
-				"internalType": "bytes4",
-				"name": "",
-				"type": "bytes4"
-			}
-		],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "address",
-				"name": "",
-				"type": "address"
-			},
-			{
-				"internalType": "address",
-				"name": "from_",
-				"type": "address"
-			},
-			{
-				"internalType": "uint256",
-				"name": "tokenId_",
-				"type": "uint256"
-			},
-			{
-				"internalType": "bytes",
-				"name": "data_",
-				"type": "bytes"
-			}
-		],
-		"name": "onERC721Received",
-		"outputs": [
-			{
-				"internalType": "bytes4",
-				"name": "",
-				"type": "bytes4"
-			}
-		],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "owner",
-		"outputs": [
-			{
-				"internalType": "address",
-				"name": "",
-				"type": "address"
+				"type": "bool"
 			}
 		],
 		"stateMutability": "view",
@@ -781,34 +1086,41 @@
 				"type": "uint256"
 			}
 		],
-		"name": "playGambling",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
+		"name": "isClaimGamblingNFTAllowed",
+		"outputs": [
 			{
-				"internalType": "uint256",
-				"name": "requestId",
-				"type": "uint256"
-			},
-			{
-				"internalType": "uint256[]",
-				"name": "randomWords",
-				"type": "uint256[]"
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
 			}
 		],
-		"name": "rawFulfillRandomWords",
-		"outputs": [],
-		"stateMutability": "nonpayable",
+		"stateMutability": "view",
 		"type": "function"
 	},
 	{
 		"inputs": [],
-		"name": "renounceOwnership",
-		"outputs": [],
-		"stateMutability": "nonpayable",
+		"name": "MaxNFTStorageRecordItems",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "owner",
+		"outputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
 		"type": "function"
 	},
 	{
@@ -828,37 +1140,6 @@
 			}
 		],
 		"stateMutability": "pure",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "address",
-				"name": "newOwner",
-				"type": "address"
-			}
-		],
-		"name": "transferOwnership",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "address",
-				"name": "account_",
-				"type": "address"
-			},
-			{
-				"internalType": "uint256",
-				"name": "amount_",
-				"type": "uint256"
-			}
-		],
-		"name": "withdrawCommission",
-		"outputs": [],
-		"stateMutability": "nonpayable",
 		"type": "function"
 	}
 ]

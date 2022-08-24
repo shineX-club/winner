@@ -25,19 +25,27 @@ const convertDate = (ts) => {
   return arr[0] + '-' + pad(arr[1]) + '-' + pad(arr[2])
 }
 
+const convertTime = (time) => {
+  return parseInt(new Date(time).getTime() / 1000)
+}
+
 export default function Create() {
   const router = useRouter()
   const { id, step } = router.query
   const { account, provider } = useWeb3React()
   const [config, setConfig] = useState({
-    minFundraisingAmount: 200,
+    // 最小集资金额
+    minFundraisingAmount: '0.01',
     initiatorWinProbability: 3000,
     fundraisingStartTime: convertDate(Date.now()),
     deadline: convertDate(Date.now() + 86400 * 1000 * 3),
-    minCounterpartyBid: 1,
-    maxCounterpartyBid: 100,
+    // 最小出资金额
+    minCounterpartyBid: '0.01',
+    // 最大出资金额
+    maxCounterpartyBid: '1',
   })
   const [current, setCurrent] = useState(1)
+  const [collapse, setCollapse] = useState(0)
   const [nfts, setNFTs] = useState([])
   const [selected, setSelected] = useState([])
 
@@ -52,9 +60,12 @@ export default function Create() {
     )
 
     const convertConfig = {
-      ...config,
-      fundraisingStartTime: new Date(config.fundraisingStartTime).getTime(),
-      deadline: new Date(config.deadline).getTime()
+      initiatorWinProbability: ethers.BigNumber.from(config.initiatorWinProbability),
+      maxCounterpartyBid: ethers.FixedNumber.from(config.maxCounterpartyBid),
+      minCounterpartyBid: ethers.FixedNumber.from(config.minCounterpartyBid),
+      minFundraisingAmount: ethers.FixedNumber.from(config.minFundraisingAmount),
+      fundraisingStartTime: convertTime(config.fundraisingStartTime),
+      deadline: convertTime(config.deadline)
     }
 
     console.log(convertConfig)
@@ -112,6 +123,13 @@ export default function Create() {
     setSelected(selected.concat(nft))
   }
 
+  const withdrawNFT = async (nft) => {
+    const newContract = await contract.connect(
+      provider.getSigner()
+    )
+    console.log(newContract)
+  }
+
   const getGame = async () => {
     console.log('getGame', id)
     const newContract = contract.connect(provider.getSigner())
@@ -135,6 +153,14 @@ export default function Create() {
       console.log('selected', selected)
       setSelected(selected)
     }
+  }
+
+  const startGamble = async () => {
+    // const newContract = await contract.connect(
+    //   provider.getSigner()
+    // )
+    // console.log(newContract)
+    router.replace(`/game/${id}`)
   }
 
   useEffect(() => {
@@ -315,7 +341,7 @@ export default function Create() {
                     {
                       selected.length && <div className='nft-container'>
                         {
-                          selected.map(item => <div key={item.id} className='nft-wrap'>
+                          selected.map(item => <div key={item.id} className='nft-wrap' onClick={() => withdrawNFT(item)}>
                             <img className='nft-img' src={item.image_url} />
                             <p className='nft-name'>{item.collection.name}：{item.name}</p>
                           </div>)
@@ -323,18 +349,23 @@ export default function Create() {
                       </div>
                     }
                     {
-                      nfts && Object.keys(nfts).map(address => <div className='nft-container' key={address}>
-                        <p className='nft-title'>{nfts[address][0].collection.name}</p>
-                        <div className='nft-list'>
+                      nfts && Object.keys(nfts).map((address, index) => <div className='nft-container' key={address}>
+                        <p className='nft-title' onClick={() => setCollapse(collapse === index ? -1 : index)}>{nfts[address][0].collection.name}</p>
+                        <div className='nft-list' style={{
+                          display: collapse === index ? 'flex' : 'none'
+                        }}>
                           {
                             nfts[address].map(item => <div className='nft-wrap' key={item.id} onClick={() => appendNFT(item, address)}>
-                              <img className='nft-img' src={item.image_url} />
+                              <img className='nft-img' src={item.image_url} loading='lazy' />
                               <p className='nft-name'>{item.name}</p>
                             </div>)
                           }
                         </div>
                       </div>)
                     }
+                  </div>
+                  <div className="px-4 py-3 bg-gray-50 text-right sm:px-6">
+                    <button className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" onClick={() => startGamble()}>Start</button>
                   </div>
                 </>
               }
