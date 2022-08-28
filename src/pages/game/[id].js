@@ -297,7 +297,13 @@ export default function Game() {
       return 'closed'
     }
 
-    return game.record.winner === '0x0000000000000000000000000000000000000000' ? 'open' : 'ended'
+    const noWinner = game.record.winner === '0x0000000000000000000000000000000000000000'
+
+    if (parseFloat(game.record.VRFRequestId.toString()) !== 0 && noWinner) {
+      return 'openning'
+    }
+
+    return noWinner ? 'open' : 'ended'
   }, [game, config])
 
   const canAppendNFT = useMemo(() => {
