@@ -28,43 +28,47 @@ export default function Game() {
   const [showSelect, setShowSelect] = useState(false)
 
   const getGame = async () => {
-    if (!provider || !account || !id || game) {
-      return
-    }
-
-    console.log('id', id)
-    const newContract = contract.connect(provider.getSigner())
-    let result = await newContract.getGamblingStatus(id)
-    setConfig({
-      minCounterpartyBid: parseFloat(result.record.config.minCounterpartyBid.toString()),
-      maxCounterpartyBid: parseFloat(result.record.config.maxCounterpartyBid.toString()),
-      minFundraisingAmount: parseFloat(result.record.config.minFundraisingAmount.toString()),
-      initiatorWinProbability: parseFloat(result.record.config.initiatorWinProbability.toString()),
-      chainRandomMode: result.record.config.chainRandomMode,
-      fundraisingStartTime: result.record.config.fundraisingStartTime.toString() * 1000,
-      deadline: result.record.config.deadline.toString() * 1000,
-      fundraisingAmount: parseFloat(result.fundraisingAmount.toString())
-    })
-    setGame(result)
-    console.log('game', result)
-    const selectedNFTs = result.collections.map(_ => {
-      return {
-        address: _.contractAddress,
-        tokenId: _.tokenId.toString(),
-        count: Number(_.amount.toString()),
-        tombstone: _.tombstone
+    try {
+      if (!provider || !account || !id || game) {
+        return
       }
-    })
-
-    if (selectedNFTs.length) {
-      const getSelectedNFT = async ({ address, tokenId, tombstone }) => {
-        const data = await $fetch(`https://testnets-api.opensea.io/api/v1/assets?asset_contract_address=${address}&token_ids=${tokenId}`)
-        data.assets[0].tombstone = tombstone
-        return data.assets[0]
+  
+      console.log('getGame', id)
+      const newContract = contract.connect(provider.getSigner())
+      let result = await newContract.getGamblingStatus(id)
+      setConfig({
+        minCounterpartyBid: parseFloat(result.record.config.minCounterpartyBid.toString()),
+        maxCounterpartyBid: parseFloat(result.record.config.maxCounterpartyBid.toString()),
+        minFundraisingAmount: parseFloat(result.record.config.minFundraisingAmount.toString()),
+        creatorWinProbability: parseFloat(result.record.config.creatorWinProbability.toString()),
+        chainRandomMode: result.record.config.chainRandomMode,
+        fundraisingStartTime: result.record.config.fundraisingStartTime.toString() * 1000,
+        deadline: result.record.config.deadline.toString() * 1000,
+        fundraisingAmount: parseFloat(result.fundraisingAmount.toString())
+      })
+      setGame(result)
+      console.log('game', result)
+      const selectedNFTs = result.collections.map(_ => {
+        return {
+          address: _.contractAddress,
+          tokenId: _.tokenId.toString(),
+          count: Number(_.amount.toString()),
+          tombstone: _.tombstone
+        }
+      })
+  
+      if (selectedNFTs.length) {
+        const getSelectedNFT = async ({ address, tokenId, tombstone }) => {
+          const data = await $fetch(`https://testnets-api.opensea.io/api/v1/assets?asset_contract_address=${address}&token_ids=${tokenId}`)
+          data.assets[0].tombstone = tombstone
+          return data.assets[0]
+        }
+  
+        const selected = await Promise.all(selectedNFTs.map(getSelectedNFT))
+        setSelected(selected)
       }
-
-      const selected = await Promise.all(selectedNFTs.map(getSelectedNFT))
-      setSelected(selected)
+    } catch (err) {
+      console.log('getGame', err);
     }
   }
 
@@ -112,7 +116,11 @@ export default function Game() {
         join: true
       })
       const newContract = contract.connect(provider.getSigner())
-      const tx = await newContract.joinGambling(id, {
+      /**
+       * TODO：contract deployer
+       */
+      const referer = '0xb400388f00f241aEc3665a36c6038567a7d423B9'
+      const tx = await newContract.joinGambling(id, referer, {
         value: ethers.utils.parseEther(value)
       })
   
@@ -154,6 +162,10 @@ export default function Game() {
       console.log("tx", tx);
       const receipt = await tx.wait();
       console.log("receipt", receipt);
+      toast('开奖成功！')
+      setTimeout(() => {
+        window.location.reload()
+      }, 1000)
     } catch (err) {
       console.log('playGame', err)
     } finally {
@@ -220,6 +232,11 @@ export default function Game() {
         return
       }
 
+      if (loadingState.claimAllNFT) {
+        toast('正在 claim')
+        return
+      }
+
       if (claimingNFTList[nft.id] || nft.tombstone) {
         return
       }
@@ -247,11 +264,6 @@ export default function Game() {
     try {
       if (gameStatus !== 'ended') {
         toast('游戏结束后可以提币')
-        return
-      }
-
-      if (loadingState.claimAllNFT) {
-        toast('正在 claim')
         return
       }
 
@@ -311,7 +323,7 @@ export default function Game() {
   }, [isOwner, gameStatus])
 
   const gamePlayable = useMemo(() => {
-    return gameStatus === 'open' && config.fundraisingAmount > 0
+    return gameStatus === 'open' && config.fundraisingAmount >= config.minFundraisingAmount
   }, [gameStatus, config])
 
   const gameJoinable = useMemo(() => {
@@ -319,12 +331,12 @@ export default function Game() {
   }, [gameStatus, selected])
 
   const canClaimAllNFT = useMemo(() => {
-    return game && !!selected.length
+    return game && selected.filter(_ => !_.tombstone).length > 1
   }, [game, selected])
 
   const canClaimETH = useMemo(() => {
-    return myBid > 0
-  }, [myBid])
+    return myBid > 0 || account === game?.record.creator
+  }, [myBid, game, account])
 
   useEffect(() => {
     getGame()
@@ -339,10 +351,10 @@ export default function Game() {
   }, [provider, account, id, game])
 
   useEffect(() => {
-    if (from === 'create') {
+    if (from === 'create' && isOwner) {
       setShowSelect(true)
     }
-  }, [from])
+  }, [from, isOwner])
 
   if (loadingState.init) {
     return <>
@@ -377,7 +389,7 @@ export default function Game() {
             Gamemaster Winning Percentage:
             </div>
             <div className='info-val'>
-              {config?.initiatorWinProbability / 100}%
+              {config?.creatorWinProbability / 100}%
             </div>
             <div className='info-key'>
             Game join start at:

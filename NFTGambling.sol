@@ -13,7 +13,6 @@ import "hardhat/console.sol";
 
 pragma solidity ^0.8.7;
 
-
 error ErrInvalidRecord();
 error ErrInvalidContract();
 error ErrRecordLocked();
@@ -74,6 +73,10 @@ contract GamblingETHStorage {
         uint256 accumulateAmount;
         bool tombstone;
     }
+    struct ListETHItem {
+        address account;
+        uint256 amount;
+    }
     mapping(uint256 => ETHStorageRecord) _ETHStorageRecords;
 
     /**
@@ -84,6 +87,29 @@ contract GamblingETHStorage {
      */
     function getETHItem(uint256 id_, address account_) public view returns (uint256) {
         return _ETHStorageRecords[id_].items[account_];
+    }
+
+    /**
+     * @notice listETHItems is used to list eth items.
+     * @param id_ gambling id
+     * @param offset_ record offset
+     * @param limit_ record limit
+     */
+    function listETHItems(uint256 id_, uint256 offset_, uint256 limit_) public view returns (ListETHItem[] memory)   {
+        ETHStorageRecord storage record = _ETHStorageRecords[id_];
+        uint256 maxPos = record.addresses.length;
+        uint256 endPos = offset_ + limit_;
+        endPos = endPos > maxPos ? maxPos : endPos;
+        if (offset_ >= endPos) revert ErrInvalidArguments("offset");
+        ListETHItem[] memory items = new ListETHItem[](endPos - offset_);
+        for (uint256 i = offset_; i < endPos; i++) {
+            address account = record.addresses[i];
+            items[i] = ListETHItem({
+                account: account,
+                amount: record.items[account]
+            });
+        }
+        return items;
     }
 
     /**
@@ -373,6 +399,7 @@ contract GamblingNFTStorage is IERC721Receiver, IERC1155Receiver {
     }
 }
 
+
 /**
  * @title Gambling
  * @author storyicon
@@ -434,20 +461,19 @@ contract Gambling is GamblingNFTStorage, GamblingETHStorage, VRFConsumerBaseV2, 
     |__________________________________*/
 
     event GamblingCreated(uint256 indexed id, address creator);
-    event GamblingJoined(uint256 indexed id, address account);
+    event GamblingJoined(uint256 indexed id, address account, uint256 value);
     event GamblingExited(uint256 indexed id, address account);
     event GamblingPlayed(uint256 indexed id);
     event GamblingExecuted(uint256 indexed id, uint256 entropy, address winner);
     event GamblingComissionWithdrawn(address indexed account, uint256 amount);
-    event GamblingCommissionDenominatorUpdated(uint256 amount);
-    event GamblingFeeUpdated(uint256 amount);
+    event CoreConfigUpdated(CoreConfig config);
     struct GamblingConfig {
         uint256 minFundraisingAmount;
         uint256 minCounterpartyBid;
         uint256 maxCounterpartyBid;
         uint256 fundraisingStartTime;
         uint256 deadline;
-        uint256 initiatorWinProbability;
+        uint256 creatorWinProbability;
         bool chainRandomMode;
     }
     struct GamblingRecord {
@@ -466,33 +492,40 @@ contract Gambling is GamblingNFTStorage, GamblingETHStorage, VRFConsumerBaseV2, 
         // NFT staked by the creator.
         NFTItem[] collections;
     }
-
+    struct CoreConfig {
+        // 参与者手续费抽成
+        uint256 participantJoinFeeRatio;
+        // 发起者胜出抽成
+        uint256 creatorWinFeeRatio;
+        // 参与者胜出抽成
+        uint256 participantWinFeeRatio;
+        // VRF费用
+        uint256 gamblingExecuteFee;
+    }
+    
+    CoreConfig internal _coreConfig = CoreConfig({
+        participantJoinFeeRatio: 100,
+        creatorWinFeeRatio: 100,
+        participantWinFeeRatio: 3000,
+        gamblingExecuteFee: 0.01 ether
+    });
     // gambling storage
     uint256 internal _gamblingId;
     mapping(uint256 => GamblingRecord) private _gamblingRecords;
     // commission storage
-    uint256 public commissionDenominator = 10;
     uint256 public commissionPool;
-    // fee
-    uint256 public gammblingFee;
 
     /**
-     * @notice setCommissionDenominator is used to set the value of commission denominator
-     * @param denominator_ value
+     * @notice setCoreConfig is used to set core config
+     * @param config_ config
      */
-    function setCommissionDenominator(uint256 denominator_) external onlyOwner {
-        if (denominator_ == 0) revert ErrInvalidArguments("denominator");
-        commissionDenominator = denominator_;
-        emit GamblingCommissionDenominatorUpdated(denominator_);
+    function setCoreConfig(CoreConfig calldata config_) external onlyOwner {
+        _coreConfig = config_;
+        emit CoreConfigUpdated(config_);
     }
 
-    /**
-     * @notice setCommissionDenominator is used to set the value of gambling fee
-     * @param fee_ gambling fee
-     */
-    function setGamblingFee(uint256 fee_) external onlyOwner {
-        gammblingFee = fee_;
-        emit GamblingFeeUpdated(fee_);
+    function getCoreConfig() public view returns (CoreConfig memory) {
+        return _coreConfig;
     }
 
     /**
@@ -534,7 +567,7 @@ contract Gambling is GamblingNFTStorage, GamblingETHStorage, VRFConsumerBaseV2, 
      */
     function createGambling(GamblingConfig calldata config_) external {
         if (config_.deadline <= block.timestamp) revert ErrInvalidArguments("deadline");
-        if (config_.initiatorWinProbability == 0 || config_.initiatorWinProbability >= 10000) revert ErrInvalidArguments("initiatorWinProbability");
+        if (config_.creatorWinProbability == 0 || config_.creatorWinProbability >= 10000) revert ErrInvalidArguments("creatorWinProbability");
         if (config_.minFundraisingAmount == 0) revert ErrInvalidArguments("minFundraisingAmount");
         _gamblingId++;
         _gamblingRecords[_gamblingId] = GamblingRecord({
@@ -551,14 +584,22 @@ contract Gambling is GamblingNFTStorage, GamblingETHStorage, VRFConsumerBaseV2, 
      * @notice joinGambling is used to join gambling.
      * @param id_ gambling id.
      */
-    function joinGambling(uint256 id_) external payable {
+    function joinGambling(uint256 id_, address referer) external payable {
+        if (referer == msg.sender) revert ErrInvalidArguments("referer");
         GamblingRecord memory gambling = _gamblingRecords[id_];
         if (gambling.creator == msg.sender) revert ErrCreatorCanNotJoin();
         if (gambling.config.fundraisingStartTime > block.timestamp) revert ErrFundraisingNotStarted();
         if (msg.value < gambling.config.minFundraisingAmount) revert ErrToolittleMoney();
         if (gambling.config.deadline <= block.timestamp) revert ErrFundraisingFinished();
-        _addETHItem(id_, msg.sender, msg.value);
-        emit GamblingJoined(id_, msg.sender);
+        uint256 fee = _multiplyRatio(msg.value, getCoreConfig().participantJoinFeeRatio);
+        if (referer == address(0)) {
+            commissionPool += fee;
+        } else {
+            payable(referer).transfer(fee);
+        }
+        uint256 value = msg.value - fee;
+        _addETHItem(id_, msg.sender, value);
+        emit GamblingJoined(id_, msg.sender, msg.value);
     }
 
     /**
@@ -619,7 +660,9 @@ contract Gambling is GamblingNFTStorage, GamblingETHStorage, VRFConsumerBaseV2, 
     function claimGamblingNFTs(uint256 id_) external {
         if (isClaimGamblingNFTAllowed(id_)) {
             _withdrawNFTItems(id_, msg.sender);
+            return;
         }
+        revert ErrInvalidCall();
     }
 
     /**
@@ -648,19 +691,20 @@ contract Gambling is GamblingNFTStorage, GamblingETHStorage, VRFConsumerBaseV2, 
      */
     function playGambling(uint256 id_) external payable {
         GamblingRecord storage gambling = _gamblingRecords[id_];
-        if (msg.sender != gambling.creator) revert ErrNoPermission();
         if (gambling.config.deadline <= block.timestamp) revert ErrGamblingExpired();
         if (gambling.winner != address(0)) revert ErrGamblingFinished();
-        if (_ETHStorageRecords[id_].accumulateAmount < gambling.config.minFundraisingAmount) revert ErrFundraisingNotCompleted();
+        if ((gambling.creator != msg.sender) && 
+            (_ETHStorageRecords[id_].accumulateAmount < gambling.config.minFundraisingAmount)) revert ErrFundraisingNotCompleted();
         if (gambling.config.chainRandomMode) {
             _execGambling(id_, _unsafeRandom());
         } else {
-            if (msg.value < gammblingFee) revert ErrGamblingFeeRequired();
+            if (msg.value < getCoreConfig().gamblingExecuteFee) revert ErrGamblingFeeRequired();
             if (gambling.VRFRequestId != 0) revert ErrGamblingIsProcessing();
             uint256 requestId = requestRandomWords();
             if (_VRFRecords[requestId] != 0) revert ErrRequestIdExists();
             gambling.VRFRequestId = requestId;
             _VRFRecords[requestId] = id_;
+            commissionPool += msg.value;
         }
         emit GamblingPlayed(id_);
     }
@@ -673,10 +717,10 @@ contract Gambling is GamblingNFTStorage, GamblingETHStorage, VRFConsumerBaseV2, 
     function _execGambling(uint256 id_, uint256 entropy_) internal {
         GamblingRecord storage gambling = _gamblingRecords[id_];
         ETHStorageRecord storage ethRecord = _ETHStorageRecords[id_];
-        if (entropy_ % 10000 < gambling.config.initiatorWinProbability) { // initiator win
-            uint256 commission = ethRecord.accumulateAmount / commissionDenominator;
-            commissionPool += commission;
-            payable(gambling.creator).transfer(ethRecord.accumulateAmount - commission);
+        if (entropy_ % 10000 < gambling.config.creatorWinProbability) { // creator win
+            uint256 fee = _multiplyRatio(ethRecord.accumulateAmount, getCoreConfig().creatorWinFeeRatio);
+            commissionPool += fee;
+            payable(gambling.creator).transfer(ethRecord.accumulateAmount - fee);
             _clearETHStorageRecord(id_);
             gambling.winner = gambling.creator;
             emit GamblingExecuted(id_, entropy_, gambling.creator);
@@ -689,7 +733,9 @@ contract Gambling is GamblingNFTStorage, GamblingETHStorage, VRFConsumerBaseV2, 
             uint256 value_ = ethRecord.items[address_];
             step += value_;
             if (point < step) {
-                commissionPool += value_;
+                uint256 fee = _multiplyRatio(value_, getCoreConfig().participantWinFeeRatio);
+                commissionPool += fee;
+                payable(gambling.creator).transfer(value_ - fee);
                 _clearETHItem(id_, address_);
                 gambling.winner = address_;
                 emit GamblingExecuted(id_, entropy_, address_);
@@ -710,5 +756,14 @@ contract Gambling is GamblingNFTStorage, GamblingETHStorage, VRFConsumerBaseV2, 
         commissionPool -= amount_;
         payable(account_).transfer(amount_);
         emit GamblingComissionWithdrawn(account_, amount_);
+    }
+
+    /**
+     * @notice _multiplyRatio is an approximate percent multiplication implementation.
+     * @param num_ number.
+     * @param ratio_ numerator, its denominator is 10000.
+     */
+    function _multiplyRatio(uint256 num_, uint256 ratio_) internal pure returns (uint256) {
+        return ratio_ * (num_ / 10000);
     }
 }

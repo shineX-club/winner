@@ -74,7 +74,7 @@
 					},
 					{
 						"internalType": "uint256",
-						"name": "initiatorWinProbability",
+						"name": "creatorWinProbability",
 						"type": "uint256"
 					},
 					{
@@ -255,47 +255,13 @@
 				"type": "address"
 			},
 			{
-				"internalType": "uint256[]",
-				"name": "ids_",
-				"type": "uint256[]"
-			},
-			{
-				"internalType": "uint256[]",
-				"name": "values_",
-				"type": "uint256[]"
-			},
-			{
-				"internalType": "bytes",
-				"name": "data_",
-				"type": "bytes"
-			}
-		],
-		"name": "onERC1155BatchReceived",
-		"outputs": [
-			{
-				"internalType": "bytes4",
-				"name": "",
-				"type": "bytes4"
-			}
-		],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "address",
-				"name": "",
-				"type": "address"
-			},
-			{
-				"internalType": "address",
-				"name": "from_",
-				"type": "address"
+				"internalType": "uint256",
+				"name": "tokenId_",
+				"type": "uint256"
 			},
 			{
 				"internalType": "uint256",
-				"name": "tokenId_",
+				"name": "value_",
 				"type": "uint256"
 			},
 			{
@@ -304,7 +270,7 @@
 				"type": "bytes"
 			}
 		],
-		"name": "onERC721Received",
+		"name": "onERC1155Received",
 		"outputs": [
 			{
 				"internalType": "bytes4",
@@ -330,6 +296,41 @@
 		],
 		"name": "OnlyCoordinatorCanFulfill",
 		"type": "error"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"components": [
+					{
+						"internalType": "uint256",
+						"name": "participantJoinFeeRatio",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "creatorWinFeeRatio",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "participantWinFeeRatio",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "gamblingExecuteFee",
+						"type": "uint256"
+					}
+				],
+				"indexed": false,
+				"internalType": "struct Gambling.CoreConfig",
+				"name": "config",
+				"type": "tuple"
+			}
+		],
+		"name": "CoreConfigUpdated",
+		"type": "event"
 	},
 	{
 		"anonymous": false,
@@ -373,19 +374,6 @@
 			}
 		],
 		"name": "GamblingComissionWithdrawn",
-		"type": "event"
-	},
-	{
-		"anonymous": false,
-		"inputs": [
-			{
-				"indexed": false,
-				"internalType": "uint256",
-				"name": "amount",
-				"type": "uint256"
-			}
-		],
-		"name": "GamblingCommissionDenominatorUpdated",
 		"type": "event"
 	},
 	{
@@ -455,19 +443,6 @@
 		"anonymous": false,
 		"inputs": [
 			{
-				"indexed": false,
-				"internalType": "uint256",
-				"name": "amount",
-				"type": "uint256"
-			}
-		],
-		"name": "GamblingFeeUpdated",
-		"type": "event"
-	},
-	{
-		"anonymous": false,
-		"inputs": [
-			{
 				"indexed": true,
 				"internalType": "uint256",
 				"name": "id",
@@ -478,6 +453,12 @@
 				"internalType": "address",
 				"name": "account",
 				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "value",
+				"type": "uint256"
 			}
 		],
 		"name": "GamblingJoined",
@@ -502,6 +483,11 @@
 				"internalType": "uint256",
 				"name": "id_",
 				"type": "uint256"
+			},
+			{
+				"internalType": "address",
+				"name": "referer",
+				"type": "address"
 			}
 		],
 		"name": "joinGambling",
@@ -535,13 +521,47 @@
 				"type": "address"
 			},
 			{
-				"internalType": "uint256",
-				"name": "tokenId_",
-				"type": "uint256"
+				"internalType": "uint256[]",
+				"name": "ids_",
+				"type": "uint256[]"
+			},
+			{
+				"internalType": "uint256[]",
+				"name": "values_",
+				"type": "uint256[]"
+			},
+			{
+				"internalType": "bytes",
+				"name": "data_",
+				"type": "bytes"
+			}
+		],
+		"name": "onERC1155BatchReceived",
+		"outputs": [
+			{
+				"internalType": "bytes4",
+				"name": "",
+				"type": "bytes4"
+			}
+		],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			},
+			{
+				"internalType": "address",
+				"name": "from_",
+				"type": "address"
 			},
 			{
 				"internalType": "uint256",
-				"name": "value_",
+				"name": "tokenId_",
 				"type": "uint256"
 			},
 			{
@@ -550,7 +570,7 @@
 				"type": "bytes"
 			}
 		],
-		"name": "onERC1155Received",
+		"name": "onERC721Received",
 		"outputs": [
 			{
 				"internalType": "bytes4",
@@ -621,25 +641,34 @@
 	{
 		"inputs": [
 			{
-				"internalType": "uint256",
-				"name": "denominator_",
-				"type": "uint256"
+				"components": [
+					{
+						"internalType": "uint256",
+						"name": "participantJoinFeeRatio",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "creatorWinFeeRatio",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "participantWinFeeRatio",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "gamblingExecuteFee",
+						"type": "uint256"
+					}
+				],
+				"internalType": "struct Gambling.CoreConfig",
+				"name": "config_",
+				"type": "tuple"
 			}
 		],
-		"name": "setCommissionDenominator",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "uint256",
-				"name": "fee_",
-				"type": "uint256"
-			}
-		],
-		"name": "setGamblingFee",
+		"name": "setCoreConfig",
 		"outputs": [],
 		"stateMutability": "nonpayable",
 		"type": "function"
@@ -717,19 +746,6 @@
 	},
 	{
 		"inputs": [],
-		"name": "commissionDenominator",
-		"outputs": [
-			{
-				"internalType": "uint256",
-				"name": "",
-				"type": "uint256"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [],
 		"name": "commissionPool",
 		"outputs": [
 			{
@@ -743,12 +759,34 @@
 	},
 	{
 		"inputs": [],
-		"name": "gammblingFee",
+		"name": "getCoreConfig",
 		"outputs": [
 			{
-				"internalType": "uint256",
+				"components": [
+					{
+						"internalType": "uint256",
+						"name": "participantJoinFeeRatio",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "creatorWinFeeRatio",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "participantWinFeeRatio",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "gamblingExecuteFee",
+						"type": "uint256"
+					}
+				],
+				"internalType": "struct Gambling.CoreConfig",
 				"name": "",
-				"type": "uint256"
+				"type": "tuple"
 			}
 		],
 		"stateMutability": "view",
@@ -832,7 +870,7 @@
 							},
 							{
 								"internalType": "uint256",
-								"name": "initiatorWinProbability",
+								"name": "creatorWinProbability",
 								"type": "uint256"
 							},
 							{
@@ -912,7 +950,7 @@
 									},
 									{
 										"internalType": "uint256",
-										"name": "initiatorWinProbability",
+										"name": "creatorWinProbability",
 										"type": "uint256"
 									},
 									{
@@ -1092,6 +1130,47 @@
 				"internalType": "bool",
 				"name": "",
 				"type": "bool"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "id_",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "offset_",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "limit_",
+				"type": "uint256"
+			}
+		],
+		"name": "listETHItems",
+		"outputs": [
+			{
+				"components": [
+					{
+						"internalType": "address",
+						"name": "account",
+						"type": "address"
+					},
+					{
+						"internalType": "uint256",
+						"name": "amount",
+						"type": "uint256"
+					}
+				],
+				"internalType": "struct GamblingETHStorage.ListETHItem[]",
+				"name": "",
+				"type": "tuple[]"
 			}
 		],
 		"stateMutability": "view",

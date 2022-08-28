@@ -70,9 +70,9 @@ export default function Spaces() {
         error: null
       })
   
-      const pageStart = pageState.result.length + 1
+      const start = pageState.result.length + 1
       const ids = new Array(pageState.size).fill(0).map((_, index) => {
-        const result = pageStart + index
+        const result = start + index
         return result > pageState.total ? 0 : result
       }).filter(_ => _)
       const getGameInfo = async (id) => {
@@ -93,7 +93,7 @@ export default function Spaces() {
         loading: false,
         result: pageState.result.concat(data),
         page: pageState.page++,
-        noMore: (pageState.page + 1) * pageState.size >= pageState.total
+        noMore: (start - 1) + pageState.size >= pageState.total
       })
     } catch (err) {
       console.log(err)
@@ -118,7 +118,28 @@ export default function Spaces() {
   return <>
     <p>spaces</p>
     {
-      pageState.result.map((item, index) => (<GameItem key={index} item={item} />))
+      pageState.nothing ? <>
+        <div>nothing</div>
+      </> : <>
+      {
+        pageState.error && pageState.result.length === 0 ? <>
+          <div>first error: {pageState.error.message}</div>
+        </> : <>
+        {
+          pageState.loading && pageState.result.length === 0 ? <>
+            <div>first loading</div>
+          </> : <>
+          {
+            pageState.result.map((item, index) => (<GameItem key={index} item={item} />))
+          }
+          {
+            !pageState.noMore && <button onClick={() => getGames()}>loadmore</button>
+          }
+          </>
+        }
+        </>
+      }
+      </>
     }
   </>
 }

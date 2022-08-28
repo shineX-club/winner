@@ -30,7 +30,7 @@ export default function Create() {
   const [config, setConfig] = useState({
     // 最小集资金额
     minFundraisingAmount: '0.01',
-    initiatorWinProbability: 3000,
+    creatorWinProbability: 3000,
     fundraisingStartTime: convertDate(Date.now()),
     deadline: convertDate(Date.now() + 86400 * 1000 * 3),
     // 最小出资金额
@@ -42,67 +42,65 @@ export default function Create() {
   const [submiting, setSubmiting] = useState(false)
 
   const createGamble = async () => {
-    if (!account || !provider) {
-      toast("Please Connect Wallet First !")
-      return
-    }
-
-    const newContract = await contract.connect(
-      provider.getSigner()
-    )
-
-    const convertConfig = {
-      minFundraisingAmount: ethers.FixedNumber.from(config.minFundraisingAmount),
-      initiatorWinProbability: ethers.BigNumber.from(config.initiatorWinProbability),
-      maxCounterpartyBid: ethers.FixedNumber.from(config.maxCounterpartyBid || 0),
-      minCounterpartyBid: ethers.FixedNumber.from(config.minCounterpartyBid || 0),
-      fundraisingStartTime: convertTime(config.fundraisingStartTime),
-      deadline: convertTime(config.deadline),
-      chainRandomMode: config.chainRandomMode
-    }
-
-    console.log(convertConfig)
-    if (convertConfig.deadline * 1000 <= Date.now()) {
-      toast('Deadline 时间不对', {
-        type: 'error'
-      })
-      return
-    }
-
-    if (convertConfig.deadline <= convertConfig.fundraisingStartTime) {
-      toast('时间区间不对', {
-        type: 'error'
-      })
-      return
-    }
-
-    console.log(parseFloat(convertConfig.maxCounterpartyBid.toString()))
-    console.log(parseFloat(convertConfig.minFundraisingAmount.toString()))
-    if (
-      parseFloat(convertConfig.maxCounterpartyBid.toString()) < 0 ||
-      parseFloat(convertConfig.minCounterpartyBid.toString()) < 0 ||
-      parseFloat(convertConfig.minFundraisingAmount.toString()) <= 0 ||
-      parseFloat(convertConfig.maxCounterpartyBid.toString()) < parseFloat(convertConfig.minCounterpartyBid.toString()) ||
-      parseFloat(convertConfig.maxCounterpartyBid.toString()) > parseFloat(convertConfig.minFundraisingAmount.toString())
-    ) {
-      toast('出资金额不对', {
-        type: 'error'
-      })
-      return
-    }
-
-    if (
-      parseFloat(config.initiatorWinProbability.toString()) < 1 ||
-      parseFloat(config.initiatorWinProbability.toString()) > 10000
-    ) {
-      toast('胜出区间不对', {
-        type: 'error'
-      })
-      return
-    }
-
-    setSubmiting(true)
     try {
+      if (!account || !provider) {
+        toast("Please Connect Wallet First !")
+        return
+      }
+
+      const newContract = await contract.connect(
+        provider.getSigner()
+      )
+
+      const convertConfig = {
+        minFundraisingAmount: ethers.FixedNumber.from(config.minFundraisingAmount),
+        creatorWinProbability: ethers.BigNumber.from(config.creatorWinProbability),
+        maxCounterpartyBid: ethers.FixedNumber.from(config.maxCounterpartyBid || 0),
+        minCounterpartyBid: ethers.FixedNumber.from(config.minCounterpartyBid || 0),
+        fundraisingStartTime: ethers.BigNumber.from(convertTime(config.fundraisingStartTime)),
+        deadline: ethers.BigNumber.from(convertTime(config.deadline)),
+        chainRandomMode: config.chainRandomMode
+      }
+
+      if (convertConfig.deadline * 1000 <= Date.now()) {
+        toast('Deadline 时间不对', {
+          type: 'error'
+        })
+        return
+      }
+
+      if (convertConfig.deadline <= convertConfig.fundraisingStartTime) {
+        toast('时间区间不对', {
+          type: 'error'
+        })
+        return
+      }
+
+      if (
+        parseFloat(convertConfig.maxCounterpartyBid.toString()) < 0 ||
+        parseFloat(convertConfig.minCounterpartyBid.toString()) < 0 ||
+        parseFloat(convertConfig.minFundraisingAmount.toString()) <= 0 ||
+        parseFloat(convertConfig.maxCounterpartyBid.toString()) < parseFloat(convertConfig.minCounterpartyBid.toString()) ||
+        parseFloat(convertConfig.maxCounterpartyBid.toString()) > parseFloat(convertConfig.minFundraisingAmount.toString())
+      ) {
+        toast('出资金额不对', {
+          type: 'error'
+        })
+        return
+      }
+
+      if (
+        parseFloat(convertConfig.creatorWinProbability.toString()) < 1 ||
+        parseFloat(convertConfig.creatorWinProbability.toString()) > 10000
+      ) {
+        toast('胜出区间不对', {
+          type: 'error'
+        })
+        return
+      }
+
+      setSubmiting(true)
+      console.log('convertConfig', convertConfig)
       const estimateGas = await newContract.estimateGas.createGambling(convertConfig)
       console.log(ethers.utils.formatEther(estimateGas))
       toast('合约提交中')
@@ -116,6 +114,7 @@ export default function Create() {
         window.location = `/game/${receipt.events[0].args.id.toString()}?from=create`
       }, 1500)
     } catch (err) {
+      console.log('createGamble', err)
       setSubmiting(false)
     }
   }
@@ -158,19 +157,19 @@ export default function Create() {
 
                 <div>
                   <div className="col-span-3 sm:col-span-2">
-                    <label htmlFor="initiatorWinProbability" className="block text-sm font-medium text-gray-700"> Initiator win probability </label>
+                    <label htmlFor="creatorWinProbability" className="block text-sm font-medium text-gray-700"> Initiator win probability </label>
                     <div className="mt-1 flex rounded-md shadow-sm">
                       <input
                         type="number"
                         max="10000"
                         min="1"
-                        name="initiatorWinProbability"
-                        id="initiatorWinProbability"
+                        name="creatorWinProbability"
+                        id="creatorWinProbability"
                         className="focus:ring-indigo-500 focus:border-indigo-500 flex-1 block w-full rounded-md sm:text-sm border-gray-300"
-                        value={config.initiatorWinProbability}
+                        value={config.creatorWinProbability}
                         onChange={(evt) => setConfig({
                           ...config,
-                          initiatorWinProbability: evt.target.value
+                          creatorWinProbability: evt.target.value
                         })}
                       />
                     </div>
