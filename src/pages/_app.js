@@ -1,7 +1,7 @@
-import 'rsuite/dist/rsuite.min.css'
 import '../css/fonts.css'
 import '../css/main.css'
 import '../css/global.scss'
+import 'rsuite/dist/rsuite.min.css'
 import 'focus-visible'
 import { useState, useEffect, Fragment } from 'react'
 import { Header } from '@/components/Header'

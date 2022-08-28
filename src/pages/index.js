@@ -64,7 +64,7 @@ function Header() {
                 View All Gamble
               </a>
             </NextLink>
-            <NextLink href="/create?step=1">
+            <NextLink href="/create">
               <a style={{
                   background: 'linear-gradient(110deg,#5bd8f0,#d9c3d9 65%,#ff687f)',
                   borderRadius: '14px'
