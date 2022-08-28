@@ -1,7 +1,7 @@
 import { ethers } from 'ethers'
 import { useRouter } from 'next/router'
 import { useEffect, useState, useMemo } from 'react'
-import { contract, CONTRACT_ADDRESS } from 'connectors/contract'
+import { contract } from 'connectors/contract'
 import { useWeb3React } from '@web3-react/core'
 import { $fetch } from 'ohmyfetch'
 import { Button } from 'rsuite'
@@ -17,8 +17,15 @@ export default function Game() {
   const [config, setConfig] = useState(null)
   const [value, setValue] = useState(0)
   const [myBid, setMyBid] = useState(0)
+  const [claimingNFTList, setClaimingNFTList] = useState({})
+  const [loadingState, setLoadingState] = useState({
+    claimAllNFT: false,
+    claimETH: false,
+    join: false,
+    play: false,
+    init: true
+  })
   const [showSelect, setShowSelect] = useState(false)
-  const [usePlaceholder, setPlaceholder] = useState(true)
 
   const getGame = async () => {
     if (!provider || !account || !id || game) {
@@ -36,7 +43,7 @@ export default function Game() {
       chainRandomMode: result.record.config.chainRandomMode,
       fundraisingStartTime: result.record.config.fundraisingStartTime.toString() * 1000,
       deadline: result.record.config.deadline.toString() * 1000,
-      initiatorWinProbability: result.record.config.initiatorWinProbability
+      fundraisingAmount: parseFloat(result.fundraisingAmount.toString())
     })
     setGame(result)
     console.log('game', result)
@@ -71,86 +78,211 @@ export default function Game() {
   }
 
   const joinGame = async () => {
-    if (!gameJoinable) {
-      toast('现在不能加入游戏')
-      return
-    }
-    const numVal = parseFloat(value)
-    if (numVal <= 0) {
-      toast('不能小于0')
-      return
-    }
-    if (numVal < config.minCounterpartyBid) {
+    try {
+      if (!gameJoinable) {
+        toast('现在不能加入游戏')
+        return
+      }
+  
+      if (game.record.creator === account) {
+        toast('创建者不能加入游戏')
+        return
+      }
+  
+      const numVal = parseFloat(value)
+  
+      if (numVal <= 0) {
+        toast('不能小于0')
+        return
+      }
+  
+      if (numVal < config.minCounterpartyBid) {
+        toast('不能小于最小值')
+        return
+      }
+  
+      if (config.maxCounterpartyBid && config.maxCounterpartyBid < numVal) {
+        toast('不能大于最大值')
+        return
+      }
 
+      console.log('value', ethers.utils.parseEther(value))
+      setLoadingState({
+        ...loadingState,
+        join: true
+      })
+      const newContract = contract.connect(provider.getSigner())
+      const tx = await newContract.joinGambling(id, {
+        value: ethers.utils.parseEther(value)
+      })
+  
+      console.log("tx", tx);
+      const receipt = await tx.wait();
+      console.log("receipt", receipt);
+    } catch (err) {
+      console.log('joinGame', err)
+    } finally {
+      setLoadingState({
+        ...loadingState,
+        join: false
+      })
     }
-    console.log('value', ethers.utils.parseEther(value))
-    const newContract = contract.connect(provider.getSigner())
-    const tx = await newContract.joinGambling(id, {
-      value: ethers.utils.parseEther(value)
-    })
-
-    console.log("tx", tx);
-
-    const receipt = await tx.wait();
-    console.log("receipt", receipt);
   }
 
   const playGame = async () => {
-    if (!gamePlayable) {
-      toast('现在不能开启游戏')
-      return
-    }
-    const newContract = contract.connect(provider.getSigner())
+    try {
+      if (!gamePlayable) {
+        toast('现在不能开启游戏')
+        return
+      }
 
-    let tx
-    if (config.chainRandomMode) {
-      tx = await newContract.playGambling(id)
-    } else {
-      const randomFee = await newContract.gammblingFee()
-      console.log('randomFee', randomFee)
-      tx = await newContract.playGambling(id, {
-        value: randomFee
+      setLoadingState({
+        ...loadingState,
+        play: true
+      })
+      const newContract = contract.connect(provider.getSigner())
+      let tx
+      if (config.chainRandomMode) {
+        tx = await newContract.playGambling(id)
+      } else {
+        const randomFee = await newContract.gammblingFee()
+        console.log('randomFee', randomFee)
+        tx = await newContract.playGambling(id, {
+          value: randomFee
+        })
+      }
+      console.log("tx", tx);
+      const receipt = await tx.wait();
+      console.log("receipt", receipt);
+    } catch (err) {
+      console.log('playGame', err)
+    } finally {
+      setLoadingState({
+        ...loadingState,
+        play: false
       })
     }
-
-    console.log("tx", tx);
-
-    const receipt = await tx.wait();
-    console.log("receipt", receipt);
   }
 
   const claimAllNFT = async () => {
-    if (!selected.filter(_ => !_.tombstone).length) {
-      toast('已经全部 claim 了')
-      return
+    try {
+      if (gameStatus !== 'ended') {
+        toast('游戏结束后才可以 claim')
+        return
+      }
+
+      if (!isWinner) {
+        toast('游戏胜利者才可以 claim')
+        return
+      }
+
+      if (!selected.filter(_ => !_.tombstone).length) {
+        toast('已经全部 claim 了')
+        return
+      }
+
+      if (Object.values(claimingNFTList).filter(_ => _).length) {
+        toast('正在 claim')
+        return
+      }
+
+      setLoadingState({
+        ...loadingState,
+        claimAllNFT: true
+      })
+
+      const newContract = contract.connect(provider.getSigner())
+      const tx = await newContract.claimGamblingNFTs(id)
+  
+      console.log("tx", tx);
+  
+      const receipt = await tx.wait();
+      console.log("receipt", receipt);
+    } catch (err) {
+      console.log("claimAllNFT", err);
+    } finally {
+      setLoadingState({
+        ...loadingState,
+        claimAllNFT: false
+      })
     }
+  }
 
-    const newContract = contract.connect(provider.getSigner())
-    const tx = await newContract.claimGamblingNFTs(id)
+  const claimOneNFT = async (nft, index) => {
+    try {
+      if (gameStatus !== 'ended') {
+        toast('游戏结束后才可以 claim')
+        return
+      }
 
-    console.log("tx", tx);
+      if (!isWinner) {
+        toast('游戏胜利者才可以 claim')
+        return
+      }
 
-    const receipt = await tx.wait();
-    console.log("receipt", receipt);
+      if (claimingNFTList[nft.id] || nft.tombstone) {
+        return
+      }
+
+      setClaimingNFTList({
+        ...claimingNFTList,
+        [nft.id]: true
+      })
+      const newContract = contract.connect(provider.getSigner())
+      const tx = await newContract.claimGamblingNFT(ethers.BigNumber.from(id), ethers.BigNumber.from(index))
+      console.log("tx", tx);
+      const receipt = await tx.wait();
+      console.log("receipt", receipt);
+    } catch (err) {
+      console.log('claimOneNFT', err)
+    } finally {
+      setClaimingNFTList({
+        ...claimingNFTList,
+        [nft.id]: false
+      })
+    }
   }
 
   const claimETH = async () => {
-    if (gameStatus !== 'ended') {
-      toast('游戏结束后可以提币')
-      return
+    try {
+      if (gameStatus !== 'ended') {
+        toast('游戏结束后可以提币')
+        return
+      }
+
+      if (loadingState.claimAllNFT) {
+        toast('正在 claim')
+        return
+      }
+
+      setLoadingState({
+        ...loadingState,
+        claimETH: true
+      })
+      const newContract = contract.connect(provider.getSigner())
+      const tx = await newContract.claimGamblingETH(id)
+  
+      console.log("tx", tx);
+  
+      const receipt = await tx.wait();
+      console.log("receipt", receipt);
+    } catch (err) {
+      console.log('claimETH', err)
+    } finally {
+      setLoadingState({
+        ...loadingState,
+        claimETH: false
+      })
     }
-    const newContract = contract.connect(provider.getSigner())
-    const tx = await newContract.claimGamblingETH(id)
-
-    console.log("tx", tx);
-
-    const receipt = await tx.wait();
-    console.log("receipt", receipt);
   }
 
   const isOwner = useMemo(() => {
     return id && account && game && account === game.record.creator
   }, [id, account, game])
+
+  const isWinner = useMemo(() => {
+    return game && game.record.winner === account
+  }, [game, account])
 
   const gameStatus = useMemo(() => {
     if (!game) {
@@ -166,23 +298,23 @@ export default function Game() {
     }
 
     return game.record.winner === '0x0000000000000000000000000000000000000000' ? 'open' : 'ended'
-  }, [game])
+  }, [game, config])
 
   const canAppendNFT = useMemo(() => {
     return isOwner && gameStatus && gameStatus !== 'ended' && gameStatus !== 'closed'
   }, [isOwner, gameStatus])
 
   const gamePlayable = useMemo(() => {
-    return gameStatus === 'open'
-  }, [gameStatus])
+    return gameStatus === 'open' && config.fundraisingAmount > 0
+  }, [gameStatus, config])
 
   const gameJoinable = useMemo(() => {
     return !!selected.length && gameStatus === 'open'
   }, [gameStatus, selected])
 
   const canClaimAllNFT = useMemo(() => {
-    return game && game.record.winner === account
-  }, [game, account])
+    return game && !!selected.length
+  }, [game, selected])
 
   const canClaimETH = useMemo(() => {
     return myBid > 0
@@ -194,7 +326,10 @@ export default function Game() {
   }, [provider, account, id])
 
   useEffect(() => {
-    setPlaceholder(!id || !provider || !account || !game)
+    setLoadingState({
+      ...loadingState,
+      init: !id || !provider || !account || !game
+    })
   }, [provider, account, id, game])
 
   useEffect(() => {
@@ -203,10 +338,7 @@ export default function Game() {
     }
   }, [from])
 
-  console.log('isOwner', isOwner)
-  console.log('gameStatus', gameStatus)
-
-  if (usePlaceholder) {
+  if (loadingState.init) {
     return <>
       placeholder
     </>
@@ -214,13 +346,13 @@ export default function Game() {
 
   return <>
     <input value={value} type='text' onChange={(evt) => setValue(evt.target.value)}></input>
-    <Button color="blue" appearance="primary" onClick={() => joinGame()}>Join</Button>
-    <Button color="blue" appearance="primary" onClick={() => playGame()}>Play</Button>
+    <Button color="blue" loading={loadingState.join} appearance="primary" onClick={() => joinGame()}>Join</Button>
+    <Button color="blue" loading={loadingState.play} appearance="primary" onClick={() => playGame()}>Play</Button>
     {
-      canClaimAllNFT && <Button color="blue" appearance="primary" onClick={() => claimAllNFT()}>Claim All NFT</Button>
+      canClaimAllNFT && <Button color="blue" loading={loadingState.claimAllNFT} appearance="primary" onClick={() => claimAllNFT()}>Claim All NFT</Button>
     }
     {
-      canClaimETH && <Button color="blue" appearance="primary" onClick={() => claimETH()}>Claim ETH</Button>
+      canClaimETH && <Button color="blue" loading={loadingState.claimETH} appearance="primary" onClick={() => claimETH()}>Claim ETH</Button>
     }
     {
       canAppendNFT && <Button color="blue" appearance="primary" onClick={() => setShowSelect(true)}>Append NFT</Button>
@@ -269,7 +401,7 @@ export default function Game() {
             Game Status:
             </div>
             <div className='info-val'>
-              {game.record?.winner === '0x0000000000000000000000000000000000000000' ? 'Wait' : 'Ended'}
+              {gameStatus}
             </div>
             {
               game.record?.winner !== '0x0000000000000000000000000000000000000000' && <>
@@ -288,10 +420,10 @@ export default function Game() {
     {
       selected.length && <div className='nft-container'>
         {
-          selected.map(item => <div key={item.id} className='nft-wrap'>
+          selected.map((item, index) => <div key={item.id} className='nft-wrap'>
             <img className='nft-img' src={item.image_url} />
             <p className='nft-name'>{item.collection.name}：{item.name}</p>
-            <p>Status：{item.tombstone ? 'Claimed' : 'Unclaim'}</p>
+            <Button disabled={item.tombstone} loading={claimingNFTList[item.id]} onClick={() => claimOneNFT(item, index)}>Claim</Button>
           </div>)
         }
       </div>

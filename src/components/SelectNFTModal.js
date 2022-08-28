@@ -10,6 +10,7 @@ import ERC721ABI from '../../ABI-ERC721.json'
 export default function SelectNFTModal({ id, account, display, onClose }) {
   const { provider } = useWeb3React()
   const [nfts, setNFTs] = useState([])
+  const [loadingList, setLoadingList] = useState({})
   const [selected, setSelected] = useState([])
   const [collapse, setCollapse] = useState(0)
 
@@ -38,25 +39,42 @@ export default function SelectNFTModal({ id, account, display, onClose }) {
   }
 
   const appendNFT = async (nft, collectionAddress) => {
-    console.log('nft', nft)
-    const contract = new ethers.Contract(nft.asset_contract.address, ERC721ABI)
-    const newContract = contract.connect(provider.getSigner())
-    const gameId = ethers.utils.hexZeroPad(ethers.utils.hexlify(Number(id)), 32)
-    console.log('arguments', account, CONTRACT_ADDRESS, nft.token_id, gameId)
-    const gas = await newContract.estimateGas["safeTransferFrom(address,address,uint256,bytes)"](account, CONTRACT_ADDRESS, nft.token_id, gameId)
-    console.log('gas', gas)
-    const tx = await newContract["safeTransferFrom(address,address,uint256,bytes)"](account, CONTRACT_ADDRESS, nft.token_id, gameId)
-    console.log('tx', tx)
-    const receipt = await tx.wait()
-    console.log("receipt", receipt)
-    const tempArr = nfts[collectionAddress]
-    const index = tempArr.findIndex(_ => _.id === nft.id)
-    tempArr.splice(index, 1)
-    setNFTs({
-      ...nfts,
-      collectionAddress: tempArr
-    })
-    setSelected(selected.concat(nft))
+    if (loadingList[nft.id]) {
+      return
+    }
+
+    try {
+      console.log('nft', nft)
+      setLoadingList({
+        ...loadingList,
+        [nft.id]: true
+      })
+      const contract = new ethers.Contract(nft.asset_contract.address, ERC721ABI)
+      const newContract = contract.connect(provider.getSigner())
+      const gameId = ethers.utils.hexZeroPad(ethers.utils.hexlify(Number(id)), 32)
+      console.log('arguments', account, CONTRACT_ADDRESS, nft.token_id, gameId)
+      const gas = await newContract.estimateGas["safeTransferFrom(address,address,uint256,bytes)"](account, CONTRACT_ADDRESS, nft.token_id, gameId)
+      console.log('gas', gas)
+      const tx = await newContract["safeTransferFrom(address,address,uint256,bytes)"](account, CONTRACT_ADDRESS, nft.token_id, gameId)
+      console.log('tx', tx)
+      const receipt = await tx.wait()
+      console.log("receipt", receipt)
+      const tempArr = nfts[collectionAddress]
+      const index = tempArr.findIndex(_ => _.id === nft.id)
+      tempArr.splice(index, 1)
+      setNFTs({
+        ...nfts,
+        collectionAddress: tempArr
+      })
+      setSelected(selected.concat(nft))
+    } catch (err) {
+      console.log('appendNFT', err)
+    } finally {
+      setLoadingList({
+        ...loadingList,
+        [nft.id]: false
+      })
+    }
   }
 
   useEffect(() => {
@@ -95,6 +113,9 @@ export default function SelectNFTModal({ id, account, display, onClose }) {
                 nfts[address].map(item => <div className='nft-wrap' key={item.id} onClick={() => appendNFT(item, address)}>
                   <img className='nft-img' src={item.image_url} loading='lazy' />
                   <p className='nft-name'>{item.name}</p>
+                  {
+                    loadingList[item.id] && <div className='nft-mask' />
+                  }
                 </div>)
               }
             </div>
