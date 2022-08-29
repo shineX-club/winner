@@ -8,6 +8,9 @@ import { Button } from 'rsuite'
 import SelectNFTModal from '@/components/SelectNFTModal'
 import { toast } from 'react-toastify'
 
+/**
+ * 
+ */
 export default function Game() {
   const router = useRouter()
   const { id, from } = router.query
@@ -361,7 +364,7 @@ export default function Game() {
       placeholder
     </>
   }
-
+  console.log('myBid', myBid)
   return <>
     <input value={value} type='text' onChange={(evt) => setValue(evt.target.value)}></input>
     <Button color="blue" loading={loadingState.join} appearance="primary" onClick={() => joinGame()}>Join</Button>

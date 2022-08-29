@@ -19,23 +19,27 @@ export default function SelectNFTModal({ id, account, display, onClose }) {
   };
 
   const initNFTs = async () => {
-    const getMyNFTs = async (result, cursor) => {
-      result = result ?? []
-      const data = await $fetch(`https://testnets-api.opensea.io/api/v1/assets?owner=${account}&limit=50&cursor=${cursor || ''}`)
-      result = result.concat(data.assets)
-  
-      if (data.next) {
-        result = await getMyNFTs(result, data.next)
+    try {
+      const getMyNFTs = async (result, cursor) => {
+        result = result ?? []
+        const data = await $fetch(`https://testnets-api.opensea.io/api/v1/assets?owner=${account}&limit=50&cursor=${cursor || ''}`)
+        result = result.concat(data.assets)
+    
+        if (data.next) {
+          result = await getMyNFTs(result, data.next)
+        }
+    
+        return result
       }
   
-      return result
+      const allData = (await getMyNFTs())
+        .filter(_ => _.asset_contract.schema_name === 'ERC721')
+        // .filter(_ => _.creator.config === 'verified')
+  
+      setNFTs(groupBy(allData, (item) => item.asset_contract.address))
+    } catch (err) {
+      console.log('initNFTs', err)
     }
-
-    const allData = (await getMyNFTs())
-      .filter(_ => _.asset_contract.schema_name === 'ERC721')
-      // .filter(_ => _.creator.config === 'verified')
-
-    setNFTs(groupBy(allData, (item) => item.asset_contract.address))
   }
 
   const appendNFT = async (nft, collectionAddress) => {
