@@ -1,3 +1,7 @@
+.color-text {
+  color: #2CCDBC;
+}
+
 .nft-container {
   .nft-title {
 
@@ -30,5 +34,275 @@
     right: 0;
     bottom: 0;
     background-color: rgba(0, 0, 0, 0.5);
+  }
+}
+
+.game-container {
+  display: flex;
+  width: 1220px;
+  max-width: 100%;
+  margin: 57px auto 0;
+
+  .game-left {
+    width: 400px;
+    margin-right: 20px;
+    flex-shrink: 0;
+
+    .nft-box {
+      margin-bottom: 20px;
+    }
+  }
+
+  .game-right {
+    flex: 1;
+
+    .game-label {
+      padding: 24px 30px;
+      background: #FFFFFF;
+      border-radius: 12px;
+      margin-bottom: 20px;
+
+      &-name {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+      
+        &-left {
+          font-weight: 600;
+          font-size: 28px;
+          line-height: 44px;
+          color: #18191C;
+          margin-bottom: 8px;
+        }
+
+        &-right {
+          &.Finshed {
+            padding: 2px 10px;
+            background: #F1F2F3;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 12px;
+            line-height: 19px;
+            color: #9499A0;
+          }
+
+          &.open {
+            background: linear-gradient(274.01deg, rgba(8, 187, 228, 0.2) 1.58%, rgba(84, 224, 140, 0.2) 96.99%);
+            border-radius: 8px;
+            padding: 2px 10px;
+            color: #18191C;
+            font-weight: 500;
+          }
+        }
+      }
+
+      &-progress {
+        padding-bottom: 16px;
+      }
+
+      &-meta {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+
+        &-item {
+          display: flex;
+          flex-direction: column;
+
+          &-key {
+            font-weight: 600;
+            font-size: 14px;
+            line-height: 22px;
+            color: #9499A0;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+          }
+
+          &-val {
+            font-weight: 600;
+            font-size: 20px;
+            line-height: 31px;
+            color: #18191C;
+          }
+        }
+      }
+
+      &-footer {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+        
+        &-creator {
+          display: flex;
+          flex-direction: row;
+          align-items: center;
+          
+          span {
+            font-weight: 600;
+            font-size: 16px;
+            line-height: 25px;
+            color: #9499A0;
+          }
+        }
+
+        &-submit {
+          .linear-btn {
+            background: linear-gradient(274.01deg, #08BBE4 1.58%, #54E08C 96.99%);
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 17px;
+            line-height: 27px;
+            color: #18191C;
+            height: 51px;
+            padding-left: 30px;
+            padding-right: 30px;
+          }
+        }
+      }
+    }
+
+    .game-user {
+      &-list {
+        .user-item {
+          display: flex;
+          flex-direction: row;
+          justify-content: space-between;
+          align-items: center;
+
+          .left {
+            font-weight: 600;
+            font-size: 16px;
+            line-height: 25px;
+            color: #18191C;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+
+            .avatar {
+              width: 30px;
+              height: 30px;
+              border-radius: 50%;
+              background: #F1F2F3;
+              margin-right: 8px;
+            }
+          }
+
+          .center {
+            font-weight: 600;
+            font-size: 16px;
+            line-height: 25px;
+            color: #18191C;
+          }
+
+          .right {
+            font-weight: 500;
+            font-size: 16px;
+            line-height: 25px;
+            color: #9499A0;
+          }
+        }
+      }
+    }
+  }
+}
+
+.panel {
+  &-wrap {
+    background-color: #fff;
+    border-radius: 12px;
+    margin-bottom: 20px;
+  }
+
+  &-name {
+    padding: 14px 30px;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    font-size: 0;
+    border-bottom: 1px solid #F1F2F3;
+
+    &-left,
+    &-right {
+      display: flex;
+      flex-direction: row;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    &-left {
+      font-weight: 600;
+      font-size: 16px;
+      line-height: 25px;
+      color: #18191C;
+    }
+
+    &-right {
+      font-weight: 600;
+      font-size: 14px;
+      line-height: 22px;
+      color: #9499A0;
+    }
+  }
+
+  &-body {
+    padding: 14px 30px;
+  }
+
+  &-form {
+    >div {
+      display: flex;
+      flex-direction: row;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 0;
+    }
+  }
+
+  &-label {
+    font-weight: 500;
+    font-size: 16px;
+    line-height: 25px;
+  }
+
+  &-value {
+    font-weight: 600;
+    font-size: 16px;
+    line-height: 25px;
+    color: #18191C;
+  }
+}
+
+.nft-box {
+  display: flex;
+  border-radius: 12px;
+  overflow: hidden;
+
+  .nft-img {
+    width: 100%;
+    height: 100%;
+  }
+}
+
+.rs-progress {
+  padding: 0 !important;
+
+  &-line-outer {
+    border-radius: 10px !important;
+  }
+
+  &-line-bg {
+    border-radius: 10px !important;
+    background: linear-gradient(274.01deg, #08BBE4 1.58%, #54E08C 96.99%);
+  }
+
+  &-line-inner {
+    background: #F1F2F3 !important;
   }
 }

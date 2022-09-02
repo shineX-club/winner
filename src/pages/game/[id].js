@@ -4,13 +4,17 @@ import { useEffect, useState, useMemo } from 'react'
 import { contract } from 'connectors/contract'
 import { useWeb3React } from '@web3-react/core'
 import { $fetch } from 'ohmyfetch'
-import { Button } from 'rsuite'
+import { Button, Progress } from 'rsuite'
 import SelectNFTModal from '@/components/SelectNFTModal'
 import { toast } from 'react-toastify'
+import NFTBox from '@/components/NFTBox'
+import Image from 'next/image'
+import classnames from 'classnames'
 
-/**
- * 
- */
+export const convertAddress = (address, pre = 6, sub = 4) => {
+  return address.slice(0, pre) + '...' + address.slice(-sub)
+}
+
 export default function Game() {
   const router = useRouter()
   const { id, from } = router.query
@@ -68,6 +72,7 @@ export default function Game() {
         }
   
         const selected = await Promise.all(selectedNFTs.map(getSelectedNFT))
+        console.log('selected', selected)
         setSelected(selected)
       }
     } catch (err) {
@@ -304,25 +309,37 @@ export default function Game() {
       return ''
     }
 
-    if (config.fundraisingStartTime > Date.now()) {
-      return 'waiting'
-    }
-
-    if (config.deadline < Date.now()) {
-      return 'closed'
-    }
-
+    const isOpeninig = parseFloat(game.record.VRFRequestId.toString()) !== 0
     const noWinner = game.record.winner === '0x0000000000000000000000000000000000000000'
-
-    if (parseFloat(game.record.VRFRequestId.toString()) !== 0 && noWinner) {
+    // 已经开奖
+    if (!noWinner) {
+      return 'Finshed'
+    }
+    // 正在开奖
+    if (isOpeninig) {
       return 'openning'
     }
 
-    return noWinner ? 'open' : 'ended'
+    // 以下所有状态都是未开奖
+
+    // 还没开始
+    if (Date.now() < config.fundraisingStartTime) {
+      return 'waiting'
+    }
+    // 时间到了
+    if (Date.now() > config.deadline) {
+      return 'ended'
+    }
+    // 正在集资
+    if (config.deadline > Date.now()) {
+      return 'open'
+    }
+
+    return ''
   }, [game, config])
 
   const canAppendNFT = useMemo(() => {
-    return isOwner && gameStatus && gameStatus !== 'ended' && gameStatus !== 'closed'
+    return isOwner && gameStatus && gameStatus !== 'ended' && gameStatus !== 'Finshed'
   }, [isOwner, gameStatus])
 
   const gamePlayable = useMemo(() => {
@@ -366,6 +383,207 @@ export default function Game() {
   }
   console.log('myBid', myBid)
   return <>
+    <div className='game-container'>
+      <div className='game-left'>
+        {
+          selected.length && <>
+          {
+            selected.map((item, index) => <div key={item.id}>
+              <NFTBox item={item}></NFTBox>
+              {/* <Button disabled={item.tombstone} loading={claimingNFTList[item.id]} onClick={() => claimOneNFT(item, index)}>Claim</Button> */}
+            </div>)
+          }
+            <div className='panel-wrap'>
+              <div className='panel-name'>
+                <div className='panel-name-left'>
+                  <Image width='16' height='12' src='/img/usage/list.png'></Image>
+                  <span>&nbsp;&nbsp;NFT Information</span>
+                </div>
+                <div className='panel-name-right'>
+                  <a>
+                    <Image width='20' height='20' src='/img/usage/opensea.png'></Image>
+                  </a>
+                </div>
+              </div>
+              <div className='panel-body'>
+                <div className='panel-form'>
+                  <div>
+                    <div className='panel-label'>
+                      Blockchain
+                    </div>
+                    <div className='panel-value'>
+                      Ethereum
+                    </div>
+                  </div>
+                  <div>
+                    <div className='panel-label'>
+                      Contract Address
+                    </div>
+                    <div className='panel-value'>
+                      {convertAddress(selected[0]?.asset_contract?.address)}
+                    </div>
+                  </div>
+                  <div>
+                    <div className='panel-label'>
+                      Token Standard
+                    </div>
+                    <div className='panel-value'>
+                      {selected[0]?.asset_contract?.schema_name}
+                    </div>
+                  </div>
+                  <div>
+                    <div className='panel-label'>
+                      Token ID
+                    </div>
+                    <div className='panel-value'>
+                      {selected[0]?.token_id}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </>
+        }
+      </div>
+      <div className='game-right'>
+        <div className='game-label'>
+          <div className='game-label-name'>
+            <div className='game-label-name-left'>
+              {/* {selected[0]?.collection.name }# */}
+              {selected[0]?.name}
+            </div>
+            <div className={classnames(['game-label-name-right', gameStatus])}>
+              <span>{gameStatus}</span>
+            </div>
+          </div>
+          <div className='game-label-progress'>
+            <Progress.Line
+              status="active"
+              percent={80}
+              showInfo={false}
+              strokeWidth={20}
+            />
+          </div>
+          <div className='game-label-meta'>
+            <div className='game-label-meta-item'>
+              <div className='game-label-meta-item-key'>
+                <span>Random Mode</span>
+                &nbsp;
+                <Image width='13' height='13' src='/img/usage/faq.png'></Image>
+              </div>
+              <div className='game-label-meta-item-val'>
+                {config?.chainRandomMode ? 'OnChain' : 'VRF'}
+              </div>
+            </div>
+            <div className='game-label-meta-item'>
+              <div className='game-label-meta-item-key'>
+                <span>Deadline</span>
+                &nbsp;
+                <Image width='13' height='13' src='/img/usage/faq.png'></Image>
+              </div>
+              <div className='game-label-meta-item-val'>
+                {new Date(config?.deadline).toLocaleString()}
+              </div>
+            </div>
+            <div className='game-label-meta-item'>
+              <div className='game-label-meta-item-key'>
+                <span>Win Rate</span>
+                &nbsp;
+                <Image width='13' height='13' src='/img/usage/faq.png'></Image>
+              </div>
+              <div className='game-label-meta-item-val'>
+                {config?.creatorWinProbability / 100}%
+              </div>
+            </div>
+            <div className='game-label-meta-item'>
+              <div className='game-label-meta-item-key'>
+                <span>Total Price</span>
+                &nbsp;
+                <Image width='13' height='13' src='/img/usage/faq.png'></Image>
+              </div>
+              <div className='game-label-meta-item-val'>
+                <Image width='15' height='16' src='/img/usage/eth.png'></Image>
+                <span className='color-text'>{ethers.utils.formatEther(config?.minFundraisingAmount.toString())}</span>
+              </div>
+            </div>
+            <div className='game-label-meta-item'>
+              <div className='game-label-meta-item-key'>
+                <span>Floor Price</span>
+                &nbsp;
+                <Image width='13' height='13' src='/img/usage/faq.png'></Image>
+              </div>
+              <div className='game-label-meta-item-val'>
+                <Image width='15' height='16' src='/img/usage/eth.png'></Image>
+                <span className='color-text'>{ethers.utils.formatEther(config?.minCounterpartyBid.toString())}</span>
+              </div>
+            </div>
+          </div>
+          <div className='game-label-footer'>
+            <div className='game-label-footer-creator'>
+              <Image width='18' height='18' src='/img/usage/user.png'></Image>
+              &nbsp;
+              <span>{convertAddress(game?.record?.creator)}</span>
+            </div>
+            <div className='game-label-footer-submit'>
+              <button className='linear-btn'>Start time: {new Date(config?.fundraisingStartTime).toLocaleString()}</button>
+            </div>
+          </div>
+        </div>
+
+        {
+          gameStatus === 'Finshed' && <>
+            <div className='game-result panel-wrap'>
+              <div className='panel-name'>
+                <div className='panel-name-left'>
+                  <Image width='24' height='24' src='/img/usage/winner.svg'></Image>
+                  <span>&nbsp;Winning information</span>
+                </div>
+                <div className='panel-name-right'>
+                  <span>Data check</span>
+                  <Image width='12' height='12' src='/img/usage/arrow-right.svg'></Image>
+                </div>
+              </div>
+              <div className='panel-body'>
+                <div className='panel-form'>
+                  <div>
+                    <div className='panel-label'>Winner</div>
+                    <div className='panel-value'>{convertAddress(game?.record?.winner)}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </>
+        }
+
+        <div className='game-user panel-wrap'>
+          <div className='panel-name'>
+            <div className='panel-name-left'>
+              <Image width='24' height='24' src='/img/usage/user-2.svg'></Image>
+              <span>&nbsp;Participated records</span>
+            </div>
+            <div className='panel-name-right'>
+              <span>All ({game?.counterpartyCount.toString()})</span>
+              <Image width='12' height='12' src='/img/usage/arrow-right.svg'></Image>
+            </div>
+          </div>
+          <div className='game-user-list panel-body'>
+            <div className='user-item'>
+              <div className='left'>
+                <div className='avatar'></div>
+                <span>0xe21...430b1</span>
+              </div>
+              <div className='center'>
+                <Image width='15' height='16' src='/img/usage/eth.png'></Image>
+                <span>0.01</span>
+              </div>
+              <div className='right'>
+                <span>2022.09.01 06:41:42+UTC</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
     <input value={value} type='text' onChange={(evt) => setValue(evt.target.value)}></input>
     <Button color="blue" loading={loadingState.join} appearance="primary" onClick={() => joinGame()}>Join</Button>
     <Button color="blue" loading={loadingState.play} appearance="primary" onClick={() => playGame()}>Play</Button>
@@ -377,77 +595,6 @@ export default function Game() {
     }
     {
       canAppendNFT && <Button color="blue" appearance="primary" onClick={() => setShowSelect(true)}>Append NFT</Button>
-    }
-    {
-      game && <>
-        <div className='game-info'>
-          <div className='game-stats'>
-            <div className='info-key'>
-            Gamemaster:
-            </div>
-            <div className='info-val'>
-              {game.record?.creator}
-            </div>
-            <div className='info-key'>
-            Gamemaster Winning Percentage:
-            </div>
-            <div className='info-val'>
-              {config?.creatorWinProbability / 100}%
-            </div>
-            <div className='info-key'>
-            Game join start at:
-            </div>
-            <div className='info-val'>
-              {new Date(config?.fundraisingStartTime).toLocaleString()}
-            </div>
-            <div className='info-key'>
-            Game join deadline:
-            </div>
-            <div className='info-val'>
-              {new Date(config?.deadline).toLocaleString()}
-            </div>
-            <div className='info-key'>
-            Fundraising Amount:
-            </div>
-            <div className='info-val'>
-              {ethers.utils.formatEther(game?.fundraisingAmount.toString())}ETH
-            </div>
-            <div className='info-key'>
-            Counterparty Count:
-            </div>
-            <div className='info-val'>
-              {game.counterpartyCount.toString()}
-            </div>
-            <div className='info-key'>
-            Game Status:
-            </div>
-            <div className='info-val'>
-              {gameStatus}
-            </div>
-            {
-              game.record?.winner !== '0x0000000000000000000000000000000000000000' && <>
-                <div className='info-key'>
-                Winner:
-                </div>
-                <div className='info-val'>
-                  {game.record?.winner}
-                </div>
-              </>
-            }
-          </div>
-        </div>
-      </>
-    }
-    {
-      selected.length && <div className='nft-container'>
-        {
-          selected.map((item, index) => <div key={item.id} className='nft-wrap'>
-            <img className='nft-img' src={item.image_url} />
-            <p className='nft-name'>{item.collection.name}：{item.name}</p>
-            <Button disabled={item.tombstone} loading={claimingNFTList[item.id]} onClick={() => claimOneNFT(item, index)}>Claim</Button>
-          </div>)
-        }
-      </div>
     }
     <SelectNFTModal id={id} account={account} display={showSelect} onClose={() => setShowSelect(false)}></SelectNFTModal>
   </>

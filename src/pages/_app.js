@@ -12,6 +12,7 @@ import { ResizeObserver } from '@juggle/resize-observer'
 import { ToastContainer } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 import 'intersection-observer'
+import { Footer } from '@/components/home/Footer'
 import WalletProvider from '../../connectors/wallet'
 
 if (typeof window !== 'undefined' && !('ResizeObserver' in window)) {
@@ -58,7 +59,6 @@ export default function App({ Component, pageProps, router }) {
   const layoutProps = Component.layoutProps?.Layout
     ? { layoutProps: Component.layoutProps, navIsOpen, setNavIsOpen }
     : {}
-  const showHeader = router.pathname !== '/'
   const meta = Component.layoutProps?.meta || {}
 
   if (router.pathname.startsWith('/examples/')) {
@@ -78,18 +78,17 @@ export default function App({ Component, pageProps, router }) {
         <meta name="description" content="A Smart Contract Powered NFT Gambling Platform"></meta>
         <meta name="keywords" content="crypto,bet,gamble,nft,contract,web3,eth"></meta>
       </Head>
-      {showHeader && (
-        <Header
-          hasNav={Boolean(Component.layoutProps?.Layout?.nav)}
-          navIsOpen={navIsOpen}
-          onNavToggle={(isOpen) => setNavIsOpen(isOpen)}
-          title={meta.title}
-          section={section}
-        />
-      )}
+      <Header
+        hasNav={Boolean(Component.layoutProps?.Layout?.nav)}
+        navIsOpen={navIsOpen}
+        onNavToggle={(isOpen) => setNavIsOpen(isOpen)}
+        title={meta.title}
+        section={section}
+      />
       <Layout {...layoutProps}>
         <Component section={section} {...pageProps} />
       </Layout>
+      <Footer></Footer>
       <ToastContainer
         theme='dark'
         autoClose={5000}

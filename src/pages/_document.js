@@ -1,4 +1,3 @@
-import clsx from 'clsx'
 import NextDocument, { Html, Head, Main, NextScript } from 'next/document'
 
 const FAVICON_VERSION = 1
@@ -33,11 +32,7 @@ export default class Document extends NextDocument {
             }}
           />
         </Head>
-        <body
-          className={clsx('antialiased text-slate-500 dark:text-slate-400', {
-            'bg-white dark:bg-slate-900': !this.props.dangerousAsPath.startsWith('/examples/'),
-          })}
-        >
+        <body>
           <Main />
           <NextScript />
           <script> </script>
