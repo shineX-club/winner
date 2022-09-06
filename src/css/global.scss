@@ -67,17 +67,19 @@
         flex-direction: row;
         align-items: center;
         justify-content: space-between;
+        height: 44px;
+        margin-bottom: 8px;
       
         &-left {
           font-weight: 600;
           font-size: 28px;
           line-height: 44px;
           color: #18191C;
-          margin-bottom: 8px;
         }
 
         &-right {
-          &.Finshed {
+          &.Finshed,
+          &.ended {
             padding: 2px 10px;
             background: #F1F2F3;
             border-radius: 8px;
@@ -87,7 +89,9 @@
             color: #9499A0;
           }
 
-          &.open {
+          &.open,
+          &.openning,
+          &.waiting {
             background: linear-gradient(274.01deg, rgba(8, 187, 228, 0.2) 1.58%, rgba(84, 224, 140, 0.2) 96.99%);
             border-radius: 8px;
             padding: 2px 10px;
@@ -107,6 +111,7 @@
         justify-content: space-between;
         align-items: center;
         margin-bottom: 20px;
+        width: 75%;
 
         &-item {
           display: flex;
@@ -151,16 +156,24 @@
         }
 
         &-submit {
-          .linear-btn {
-            background: linear-gradient(274.01deg, #08BBE4 1.58%, #54E08C 96.99%);
+          .main-btn {
             border-radius: 12px;
             font-weight: 600;
             font-size: 17px;
             line-height: 27px;
-            color: #18191C;
             height: 51px;
             padding-left: 30px;
             padding-right: 30px;
+          }
+
+          .linear-btn {
+            background: linear-gradient(274.01deg, #08BBE4 1.58%, #54E08C 96.99%);
+            color: #18191C;
+          }
+
+          .gray-btn {
+            background: #F1F2F3;
+            color: #9499A0;
           }
         }
       }

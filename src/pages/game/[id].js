@@ -338,6 +338,30 @@ export default function Game() {
     return ''
   }, [game, config])
 
+  const buttonText = useMemo(() => {
+    if (gameStatus === 'Finshed') {
+      return 'Participate in the next round'
+    }
+
+    if (gameStatus === 'isOpeninig') {
+      return 'openinig...'
+    }
+
+    if (gameStatus === 'waiting') {
+      return 'Start time: ' + new Date(config?.fundraisingStartTime).toLocaleString()
+    }
+
+    if (gameStatus === 'ended') {
+      return 'End time: ' + new Date(config?.deadline).toLocaleString()
+    }
+
+    if (gameStatus === 'open') {
+      return isOwner ? 'NFT for Gamble' : 'ETH for Gamble'
+    }
+
+    return 'loading...'
+  }, [gameStatus])
+
   const canAppendNFT = useMemo(() => {
     return isOwner && gameStatus && gameStatus !== 'ended' && gameStatus !== 'Finshed'
   }, [isOwner, gameStatus])
@@ -452,13 +476,15 @@ export default function Game() {
               {/* {selected[0]?.collection.name }# */}
               {selected[0]?.name}
             </div>
-            <div className={classnames(['game-label-name-right', gameStatus])}>
-              <span>{gameStatus}</span>
-            </div>
+            {
+              gameStatus && <div className={classnames(['game-label-name-right', gameStatus])}>
+                <span>{gameStatus}</span>
+              </div>
+            }
           </div>
           <div className='game-label-progress'>
             <Progress.Line
-              status="active"
+              status={gameStatus === 'open' ? 'active' : gameStatus === 'ended' ? 'fail' : 'success'}
               percent={80}
               showInfo={false}
               strokeWidth={20}
@@ -475,7 +501,7 @@ export default function Game() {
                 {config?.chainRandomMode ? 'OnChain' : 'VRF'}
               </div>
             </div>
-            <div className='game-label-meta-item'>
+            {/* <div className='game-label-meta-item'>
               <div className='game-label-meta-item-key'>
                 <span>Deadline</span>
                 &nbsp;
@@ -484,7 +510,7 @@ export default function Game() {
               <div className='game-label-meta-item-val'>
                 {new Date(config?.deadline).toLocaleString()}
               </div>
-            </div>
+            </div> */}
             <div className='game-label-meta-item'>
               <div className='game-label-meta-item-key'>
                 <span>Win Rate</span>
@@ -525,7 +551,12 @@ export default function Game() {
               <span>{convertAddress(game?.record?.creator)}</span>
             </div>
             <div className='game-label-footer-submit'>
-              <button className='linear-btn'>Start time: {new Date(config?.fundraisingStartTime).toLocaleString()}</button>
+              <button
+                className={classnames(gameStatus === 'ended' ? 'gray-btn' : 'linear-btn', 'main-btn')}
+                disabled={!(gameStatus === 'open' || (gameStatus === 'waiting' && isOwner))}
+              >
+                {buttonText}
+              </button>
             </div>
           </div>
         </div>
