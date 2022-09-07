@@ -18,3 +18,8 @@ body {
 abbr[title] {
   text-decoration: none;
 }
+
+a:hover,
+a:focus {
+  text-decoration: none !important;
+}

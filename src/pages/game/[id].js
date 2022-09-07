@@ -485,7 +485,7 @@ export default function Game() {
           <div className='game-label-progress'>
             <Progress.Line
               status={gameStatus === 'open' ? 'active' : gameStatus === 'ended' ? 'fail' : 'success'}
-              percent={80}
+              percent={config?.fundraisingAmount / config?.minFundraisingAmount * 100}
               showInfo={false}
               strokeWidth={20}
             />
@@ -555,7 +555,9 @@ export default function Game() {
                 className={classnames(gameStatus === 'ended' ? 'gray-btn' : 'linear-btn', 'main-btn')}
                 disabled={!(gameStatus === 'open' || (gameStatus === 'waiting' && isOwner))}
               >
-                {buttonText}
+                <Image width={24} height={24} src={(gameStatus === 'waiting' && !isOwner) || gameStatus === 'ended' ? '/img/usage/time.svg' : '/img/usage/loc.svg'}></Image>
+                &nbsp;
+                <span>{buttonText}</span>
               </button>
             </div>
           </div>
