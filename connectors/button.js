@@ -49,7 +49,7 @@ export default function ConnectorButton() {
       <div>
         {
           account
-            ? <Image className='avatar' width='25' height='25' src='/img/usage/avatar.jpeg'></Image>
+            ? <div className='avatar'><Image width='25' height='25' src='/img/usage/avatar.jpeg'></Image></div>
             : <Image width='20' height='20' src='/img/usage/cash.svg'></Image>
         }
         <span>{account ? name || convertAddress(account) : 'Connect Wallet'}</span>

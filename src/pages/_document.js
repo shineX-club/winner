@@ -14,23 +14,12 @@ export default class Document extends NextDocument {
 
   render() {
     return (
-      <Html lang="en" className="dark [--scroll-mt:9.875rem] lg:[--scroll-mt:6.3125rem]">
+      <Html lang="en">
         <Head>
-          <link rel="icon" type="image/png" sizes="32x32" href={v('/favicons/favicon-32x32.png')} />
-          <link rel="icon" type="image/png" sizes="16x16" href={v('/favicons/favicon-16x16.png')} />
-          <script
-            dangerouslySetInnerHTML={{
-              __html: `
-                try {
-                  if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-                    document.documentElement.classList.add('dark')
-                  } else {
-                    document.documentElement.classList.remove('dark')
-                  }
-                } catch (_) {}
-              `,
-            }}
-          />
+          <link rel="icon" href="/img/favico.png" />
+          <title>Winner - A Decentralized NFT Trading Platform</title>
+          <meta name="description" content="A decentralized NFT trading platform that supports share-to-earn and leverage"></meta>
+          <meta name="keywords" content="crypto,leverage,nft,contract,web3,eth,blockchain,trading,decentralized,share-to-earn"></meta>
         </Head>
         <body>
           <Main />

@@ -7,7 +7,6 @@ import { useState, useEffect, Fragment } from 'react'
 import { Header } from '@/components/Header'
 import Router from 'next/router'
 import ProgressBar from '@badrap/bar-of-progress'
-import Head from 'next/head'
 import { ResizeObserver } from '@juggle/resize-observer'
 import { ToastContainer } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
@@ -73,22 +72,11 @@ export default function App({ Component, pageProps, router }) {
 
   return (
     <WalletProvider>
-      <Head>
-        <title>Winner - A Smart Contract Powered NFT Gambling Platform</title>
-        <meta name="description" content="A Smart Contract Powered NFT Gambling Platform"></meta>
-        <meta name="keywords" content="crypto,bet,gamble,nft,contract,web3,eth"></meta>
-      </Head>
-      <Header
-        hasNav={Boolean(Component.layoutProps?.Layout?.nav)}
-        navIsOpen={navIsOpen}
-        onNavToggle={(isOpen) => setNavIsOpen(isOpen)}
-        title={meta.title}
-        section={section}
-      />
+      <Header/>
       <Layout {...layoutProps}>
         <Component section={section} {...pageProps} />
       </Layout>
-      <Footer></Footer>
+      <Footer/>
       <ToastContainer
         theme='dark'
         autoClose={5000}
