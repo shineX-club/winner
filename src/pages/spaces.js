@@ -139,7 +139,7 @@ export default function Spaces() {
   })
 
   return <div className="spaces-container">
-    <p>spaces</p>
+    <img src='/img/usage/banner.png'></img>
     {
       provider ? <FlowList
         func={getPostData}

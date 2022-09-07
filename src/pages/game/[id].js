@@ -9,6 +9,7 @@ import SelectNFTModal from '@/components/SelectNFTModal'
 import { toast } from 'react-toastify'
 import NFTBox from '@/components/NFTBox'
 import Image from 'next/image'
+import FlowList from '@flowlist/react-flowlist'
 import classnames from 'classnames'
 
 export const convertAddress = (address, pre = 6, sub = 4) => {
@@ -88,6 +89,32 @@ export default function Game() {
     const result = await newContract.getETHItem(id, account)
     setMyBid(parseFloat(result.toString()))
   }
+
+  const getUsers = ({ page }) => new Promise(async (resolve, reject) => {
+    try {
+      console.log('getUsers', id, page * 10, 10)
+      const newContract = contract.connect(provider.getSigner())
+      const list = await newContract.listETHItems(
+        ethers.BigNumber.from(id),
+        ethers.BigNumber.from((page - 1) * 10),
+        ethers.BigNumber.from(10)
+      )
+
+      resolve({
+        noMore: list.length < 10,
+        total: parseFloat(game?.counterpartyCount.toString()),
+        result: list.map(_ => {
+          return {
+            address: _.account,
+            amount: ethers.utils.formatEther(_.amount.toString())
+          }
+        })
+      })
+    } catch (err) {
+      console.log('getUsers', err)
+      reject(err)
+    }
+  })
 
   const joinGame = async () => {
     try {
@@ -383,6 +410,12 @@ export default function Game() {
   }, [myBid, game, account])
 
   useEffect(() => {
+    if (!gameStatus || gameStatus === 'waiting') {
+      return
+    }
+  }, [gameStatus])
+
+  useEffect(() => {
     getGame()
     getMyBid()
   }, [provider, account, id])
@@ -588,36 +621,62 @@ export default function Game() {
           </>
         }
 
-        <div className='game-user panel-wrap'>
-          <div className='panel-name'>
-            <div className='panel-name-left'>
-              <Image width='24' height='24' src='/img/usage/user-2.svg'></Image>
-              <span>&nbsp;Participated records</span>
-            </div>
-            <div className='panel-name-right'>
-              <span>All ({game?.counterpartyCount.toString()})</span>
-              <Image width='12' height='12' src='/img/usage/arrow-right.svg'></Image>
-            </div>
-          </div>
-          <div className='game-user-list panel-body'>
-            <div className='user-item'>
-              <div className='left'>
-                <div className='avatar'></div>
-                <span>0xe21...430b1</span>
+        {
+          gameStatus && gameStatus !== 'waiting' && <>
+            <div className='game-user panel-wrap'>
+              <div className='panel-name'>
+                <div className='panel-name-left'>
+                  <Image width='24' height='24' src='/img/usage/user-2.svg'></Image>
+                  <span>&nbsp;Participated records</span>
+                </div>
+                <div className='panel-name-right'>
+                  <span>All ({game?.counterpartyCount.toString()})</span>
+                  <Image width='12' height='12' src='/img/usage/arrow-right.svg'></Image>
+                </div>
               </div>
-              <div className='center'>
-                <Image width='15' height='16' src='/img/usage/eth.png'></Image>
-                <span>0.01</span>
-              </div>
-              <div className='right'>
-                <span>2022.09.01 06:41:42+UTC</span>
+              <div className='game-user-list panel-body'>
+                <FlowList
+                  func={getUsers}
+                  mainSlot={(({ result }) => {
+                    return result.map((item) => {
+                      return <div className='user-item' key={item.address}>
+                        <div className='left'>
+                          <div className='avatar'></div>
+                          <span>{convertAddress(item.address)}</span>
+                        </div>
+                        <div className='right'>
+                          <Image width='15' height='16' src='/img/usage/eth.png'></Image>
+                          <span>{item.amount}</span>
+                        </div>
+                      </div>
+                    })
+                  })}
+                  firstloadingSlot={() => {
+                    return <>
+                      first loading
+                    </>
+                  }}
+                  nothingSlot={() => {
+                    return <>
+                      nothing
+                    </>
+                  }}
+                  firstErrorSlot={() => {
+                    return <>
+                      first error
+                    </>
+                  }}
+                  loadingSlot={() => {}}
+                  errorSlot={() => {}}
+                >
+                </FlowList>
               </div>
             </div>
-          </div>
-        </div>
+          </>
+        }
       </div>
     </div>
-    <input value={value} type='text' onChange={(evt) => setValue(evt.target.value)}></input>
+    {/* <input value={value} type='text' onChange={(evt) => setValue(evt.target.value)}></input>
     <Button color="blue" loading={loadingState.join} appearance="primary" onClick={() => joinGame()}>Join</Button>
     <Button color="blue" loading={loadingState.play} appearance="primary" onClick={() => playGame()}>Play</Button>
     {
@@ -628,7 +687,7 @@ export default function Game() {
     }
     {
       canAppendNFT && <Button color="blue" appearance="primary" onClick={() => setShowSelect(true)}>Append NFT</Button>
-    }
+    } */}
     <SelectNFTModal id={id} account={account} display={showSelect} onClose={() => setShowSelect(false)}></SelectNFTModal>
   </>
 }

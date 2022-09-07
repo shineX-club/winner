@@ -1,7 +1,12 @@
 import { useEffect } from 'react'
 import { metaMask } from "./metaMask.ts";
 import Cookies from 'js-cookie'
+import Image from 'next/image';
 import { useWeb3React } from '@web3-react/core'
+
+export const convertAddress = (address, pre = 6, sub = 4) => {
+  return address.slice(0, pre) + '...' + address.slice(-sub)
+}
 
 export const connectWallet = async (slient = false) => {
   let connector = metaMask
@@ -15,7 +20,7 @@ export const connectWallet = async (slient = false) => {
 }
 
 export default function ConnectorButton() {
-  const { account, connector } = useWeb3React()
+  const { account, connector, name } = useWeb3React()
 
   const login = async () => {
     await connectWallet()
@@ -40,13 +45,15 @@ export default function ConnectorButton() {
   }, [])
 
   return <>
-    <button style={{
-      background: 'linear-gradient(110deg,#4ec0d6,#c7b2c7 65%,#ff6f84)',
-      padding: '0 20px',
-      borderRadius: '14px',
-      height: '40px',
-      color: '#000',
-      fontWeight: '700'
-    }} onClick={account ? logout : login}>{account ? 'Disconnect' : 'Connect Wallet'}</button>
+    <button className='connect-btn' onClick={account ? logout : login}>
+      <div>
+        {
+          account
+            ? <Image className='avatar' width='25' height='25' src='/img/usage/avatar.jpeg'></Image>
+            : <Image width='20' height='20' src='/img/usage/cash.svg'></Image>
+        }
+        <span>{account ? name || convertAddress(account) : 'Connect Wallet'}</span>
+      </div>
+    </button>
   </>
 }

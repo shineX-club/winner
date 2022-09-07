@@ -12,7 +12,7 @@ import { ResizeObserver } from '@juggle/resize-observer'
 import { ToastContainer } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 import 'intersection-observer'
-import { Footer } from '@/components/home/Footer'
+import { Footer } from '@/components/Footer'
 import WalletProvider from '../../connectors/wallet'
 
 if (typeof window !== 'undefined' && !('ResizeObserver' in window)) {
