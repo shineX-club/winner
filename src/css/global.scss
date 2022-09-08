@@ -2,6 +2,11 @@
   color: #2CCDBC;
 }
 
+.linear-btn {
+  background: linear-gradient(274.01deg, #08BBE4 1.58%, #54E08C 96.99%);
+  color: #18191C;
+}
+
 .app-header {
   // position: sticky;
   // top: 0;
@@ -298,11 +303,6 @@
             align-items: center;
           }
 
-          .linear-btn {
-            background: linear-gradient(274.01deg, #08BBE4 1.58%, #54E08C 96.99%);
-            color: #18191C;
-          }
-
           .gray-btn {
             background: #F1F2F3;
             color: #9499A0;
@@ -472,7 +472,117 @@
   }
 }
 
+.homepage-container {
+  position: relative;
+
+  img {
+    display: block;
+  }
+
+  .bg {
+    width: 100%;
+    height: auto;
+  }
+
+  .title {
+    position: absolute;
+    left: 50%;
+    top: 80px;
+    transform: translateX(-50%);
+  }
+
+  .desc {
+    font-weight: 400;
+    font-size: 18px;
+    line-height: 28px;
+    text-align: center;
+    color: #61666D;
+    width: 750px;
+    position: absolute;
+    left: 50%;
+    top: 210px;
+    transform: translateX(-50%);
+  }
+
+  .btns {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    position: absolute;
+    left: 50%;
+    top: 300px;
+    transform: translateX(-50%);
+    width: 100%;
+
+    .linear-btn {
+      padding: 12px 30px;
+      border-radius: 12px;
+      margin: 0 8px;
+      font-weight: 600;
+      font-size: 17px;
+      line-height: 27px;
+      display: flex;
+      flex-direction: row;
+      justify-content: center;
+      align-items: center;
+    }
+  }
+
+  .how-work {
+    position: absolute;
+    left: 50%;
+    top: 700px;
+    transform: translateX(-50%);
+  }
+
+  .faq-wrap {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 120px;
+
+    .faq-box {
+      position: relative;
+      background: #FFFFFF;
+      width: 358px;
+      height: 483px;
+      border-radius: 16px;
+      margin: 0 20px;
+      padding: 20px 20px 50px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      align-items: center;
+
+      .faq-title {
+        font-weight: 700;
+        font-size: 24px;
+        line-height: 90px;
+        text-align: center;
+        color: #000000;
+      }
+
+      .linear-btn {
+        padding: 12px 30px;
+        border-radius: 12px;
+        font-weight: 600;
+        font-size: 17px;
+        line-height: 27px;
+        color: #18191C;
+        display: flex;
+        flex-direction: row;
+        justify-content: center;
+        align-items: center;
+      }
+    }
+  }
+}
+
 .spaces-container {
+  margin-bottom: 150px;
+
   .list-view {
     display: flex;
     width: 1220px;

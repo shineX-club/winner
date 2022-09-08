@@ -622,7 +622,7 @@ export default function Game() {
         }
 
         {
-          gameStatus && gameStatus !== 'waiting' && <>
+          gameStatus && gameStatus !== 'waiting' && Number(game?.counterpartyCount.toString()) !== 0 && <>
             <div className='game-user panel-wrap'>
               <div className='panel-name'>
                 <div className='panel-name-left'>
