@@ -109,6 +109,9 @@ export default function Spaces() {
       })
 
       const nfts = await Promise.all(data.map(_ => {
+        if (!_.collections[0]) {
+          return null
+        }
         return getNftInfo({
           address: _.collections[0].contractAddress,
           tokenId: _.collections[0].tokenId.toString()
@@ -120,7 +123,7 @@ export default function Spaces() {
           ...item,
           nft: nfts[index]
         }
-      })
+      }).filter(_ => _.nft)
 
       setPageState({
         ...pageState,
