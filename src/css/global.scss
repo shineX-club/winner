@@ -352,6 +352,47 @@
   }
 }
 
+.create-container {
+  width: 800px;
+  margin: 0 auto;
+
+  .banner {
+    margin-top: 40px;
+  }
+
+  .form-item {
+    margin-bottom: 50px;
+
+    .title {
+      font-weight: 700;
+      font-size: 24px;
+      line-height: 38px;
+      color: #18191C;
+    }
+
+    .desc {
+      font-weight: 400;
+      font-size: 16px;
+      line-height: 22px;
+      color: #9499A0;
+      margin-bottom: 16px;
+    }
+  }
+
+  .double-form {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    margin: 0 -10px;
+
+    .form-item {
+      flex: 1;
+      margin: 10px;
+    }
+  }
+}
+
 .panel {
   &-wrap {
     background-color: #fff;

@@ -3,7 +3,13 @@ import { useWeb3React } from '@web3-react/core'
 import { contract } from 'connectors/contract'
 import { ethers } from 'ethers'
 import { toast } from 'react-toastify'
-import { Button } from 'rsuite'
+import { Button, Input, InputNumber, InputGroup, Slider } from 'rsuite'
+import Image from 'next/image'
+import { DateRangePicker } from 'rsuite'
+import startOfWeek from 'date-fns/startOfWeek';
+import endOfWeek from 'date-fns/endOfWeek';
+import endOfDay from 'date-fns/endOfDay'
+import addDays from 'date-fns/addDays';
 
 const pad = (number) => {
   if (String(number).length === 1) {
@@ -12,6 +18,32 @@ const pad = (number) => {
 
   return number
 }
+
+const predefinedRanges = [
+  {
+    label: 'Today',
+    value: [new Date(), endOfDay(new Date())]
+  },
+  {
+    label: 'Next three day',
+    value: [new Date(), addDays(endOfDay(new Date()), 3)]
+  },
+  {
+    label: 'This week',
+    value: [new Date(), endOfWeek(new Date())]
+  },
+  {
+    label: 'Next week',
+    closeOverlay: false,
+    value: value => {
+      const [start = new Date()] = value || [];
+      return [
+        addDays(startOfWeek(start, { weekStartsOn: 0 }), 7),
+        addDays(endOfWeek(start, { weekStartsOn: 0 }), 7)
+      ];
+    }
+  }
+]
 
 const convertDate = (ts) => {
   const time = new Date(ts).toLocaleDateString()
@@ -40,6 +72,14 @@ export default function Create() {
     chainRandomMode: true
   })
   const [submiting, setSubmiting] = useState(false)
+
+  const setTimeRange = (range) => {
+    setConfig({
+      ...config,
+      fundraisingStartTime: convertTime(range[0]),
+      deadline: convertTime(range[1])
+    })
+  }
 
   const createGamble = async () => {
     try {
@@ -119,192 +159,136 @@ export default function Create() {
     }
   }
 
-  return <>
-    <main className="max-w-[52rem] mx-auto px-4 pb-28 sm:px-6 md:px-8 xl:px-12 lg:max-w-6xl">
-      <div>
-        <div className="md:grid md:grid-cols-3 md:gap-6 mt-10">
+  return <div className='create-container'>
+    <div className='banner'>
+      <Image width='561' height='90' src='/img/usage/create-banner.svg'></Image>
+    </div>
+    <div className='form-item'>
+      <div className='title'>Set time</div>
+      <div className='desc'>在到达deadline之前，只要筹足了最小筹集资金，可以随时开始;如果到达了deadline仍然没有摇奖，那么游戏结束，用户可以把钱提走，发起者也可以把NFT提走</div>
+      <div className='input'>
+        <DateRangePicker
+          format="yyyy-MM-dd HH:mm:ss"
+          placeholder="Select Date Range"
+          ranges={predefinedRanges}
+          onChange={setTimeRange}
+          defaultCalendarValue={[new Date(Date.now() + 1800000), new Date(Date.now() + 86400 * 2000)]}
+        />
+      </div>
+    </div>
 
-          <div className="md:col-span-1">
-            <div className="px-4 sm:px-0">
-              <h3 className="text-lg font-medium leading-6">Profile</h3>
-              <p className="mt-1 text-sm text-gray-600">This information will be displayed publicly so be careful what you share.</p>
-            </div>
+    <div className='form-item'>
+      <div className='title'>Target price</div>
+      <div className='desc'>最小集资金额，只有在到达deadline之前募集够足够的金额，才能开始赌局.</div>
+      <div className='input'>
+        <InputGroup>
+          <InputNumber
+            step={0.01}
+            value={config.minFundraisingAmount}
+            onChange={(minFundraisingAmount) => setConfig({ ...config, minFundraisingAmount })}
+          />
+          <InputGroup.Addon>
+            <Image src='/img/usage/eth.png' width='16' height='16'></Image>
+            <span>ETH</span>
+          </InputGroup.Addon>
+        </InputGroup>
+      </div>
+    </div>
+
+    <div className='form-item'>
+      <div className='title'>Chain Random Mode</div>
+      <div className='desc'>在到达deadline之前，只要筹足了最小筹集资金，可以随时开始;如果到达了deadline仍然没有摇奖，那么游戏结束，用户可以把钱提走，发起者也可以把NFT提走</div>
+      <div className='input'>
+        <div className="flex items-start">
+          <div className="flex items-center h-5">
+            <input
+              onChange={(evt) => setConfig({
+                ...config,
+                chainRandomMode: true
+              })}
+              id="random-onchain" name="random-mode" type="radio" checked value={config.chainRandomMode} className="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300" />
           </div>
-
-          <div className="mt-5 md:mt-0 md:col-span-2">
-            <div className="shadow sm:rounded-md sm:overflow-hidden">
-              <div className="px-4 py-5 bg-white space-y-6 sm:p-6">
-                <div>
-                  <div className="col-span-3 sm:col-span-2">
-                    <label htmlFor="minFundraisingAmount" className="block text-sm font-medium text-gray-700"> Min fundraising amount </label>
-                    <div className="mt-1 flex rounded-md shadow-sm">
-                      <input
-                        type="text"
-                        name="minFundraisingAmount"
-                        id="minFundraisingAmount"
-                        className="focus:ring-indigo-500 focus:border-indigo-500 flex-1 block w-full rounded-none rounded-l-md sm:text-sm border-gray-300"
-                        value={config.minFundraisingAmount}
-                        onChange={(evt) => setConfig({
-                          ...config,
-                          minFundraisingAmount: evt.target.value
-                        })}
-                      />
-                      <span className="inline-flex items-center px-3 rounded-r-md border border-l-0 border-gray-300 bg-gray-50 text-gray-500 text-sm"> ETH </span>
-                    </div>
-                    <p className="mt-2 text-sm text-gray-500">最小集资金额，只有在到达deadline之前募集够足够的金额，才能开始赌局.</p>
-                  </div>
-                </div>
-
-                <div>
-                  <div className="col-span-3 sm:col-span-2">
-                    <label htmlFor="creatorWinProbability" className="block text-sm font-medium text-gray-700"> Initiator win probability </label>
-                    <div className="mt-1 flex rounded-md shadow-sm">
-                      <input
-                        type="number"
-                        max="10000"
-                        min="1"
-                        name="creatorWinProbability"
-                        id="creatorWinProbability"
-                        className="focus:ring-indigo-500 focus:border-indigo-500 flex-1 block w-full rounded-md sm:text-sm border-gray-300"
-                        value={config.creatorWinProbability}
-                        onChange={(evt) => setConfig({
-                          ...config,
-                          creatorWinProbability: evt.target.value
-                        })}
-                      />
-                    </div>
-                    <p className="mt-2 text-sm text-gray-500">发起者获胜的概率，分母是10000</p>
-                  </div>
-                </div>
-
-                <div>
-                  <div className="col-span-3 sm:col-span-2">
-                    <label htmlFor="fundraisingStartTime" className="block text-sm font-medium text-gray-700"> Fundraising start time </label>
-                    <div className="mt-1 flex rounded-md shadow-sm">
-                      <input
-                        type="date"
-                        name="fundraisingStartTime"
-                        id="fundraisingStartTime"
-                        className="focus:ring-indigo-500 focus:border-indigo-500 flex-1 block w-full rounded-md sm:text-sm border-gray-300"
-                        value={config.fundraisingStartTime}
-                        onChange={(evt) => setConfig({
-                          ...config,
-                          fundraisingStartTime: evt.target.value
-                        })}
-                      />
-                    </div>
-                    <p className="mt-2 text-sm text-gray-500">在到达deadline之前，只要筹足了minFundraisingAmount，可以随时开始</p>
-                  </div>
-                </div>
-
-                <div>
-                  <div className="col-span-3 sm:col-span-2">
-                    <label htmlFor="deadline" className="block text-sm font-medium text-gray-700"> Deadline </label>
-                    <div className="mt-1 flex rounded-md shadow-sm">
-                      <input
-                        type="date"
-                        name="deadline"
-                        id="deadline"
-                        className="focus:ring-indigo-500 focus:border-indigo-500 flex-1 block w-full rounded-md sm:text-sm border-gray-300"
-                        value={config.deadline}
-                        onChange={(evt) => setConfig({
-                          ...config,
-                          deadline: evt.target.value
-                        })}
-                      />
-                    </div>
-                    <p className="mt-2 text-sm text-gray-500">如果到达了deadline仍然没有摇奖，那么游戏结束，用户可以把钱提走，发起者也可以把NFT提走</p>
-                  </div>
-                </div>
-
-                <div>
-                  <div className="col-span-3 sm:col-span-2">
-                    <fieldset>
-                      <div className="text-base font-medium text-gray-900" aria-hidden="true">Chain Random Mode</div>
-                      <div className="mt-4 space-y-4">
-                        <div className="flex items-start">
-                          <div className="flex items-center h-5">
-                            <input
-                            onChange={(evt) => setConfig({
-                              ...config,
-                              chainRandomMode: true
-                            })}
-                            id="random-onchain" name="random-mode" type="radio" checked value={config.chainRandomMode} className="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300"/>
-                          </div>
-                          <div className="ml-3 text-sm">
-                            <label htmlFor="random-onchain" className="font-medium text-gray-700"> Use OnChain(block) Random </label>
-                            <p className="text-gray-500">on chain mode tips.</p>
-                          </div>
-                        </div>
-                        <div className="flex items-start">
-                          <div className="flex items-center h-5">
-                            <input
-                            onChange={(evt) => setConfig({
-                              ...config,
-                              chainRandomMode: false
-                            })}
-                            id="random-vrf" name="random-mode" type="radio" value={config.chainRandomMode} className="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300"/>
-                          </div>
-                          <div className="ml-3 text-sm">
-                            <label htmlFor="random-vrf" className="font-medium text-gray-700"> Use Chianlink(VRF) Random </label>
-                            <p className="text-gray-500">vrf mode tips.</p>
-                          </div>
-                        </div>
-                      </div>
-                    </fieldset>
-                  </div>
-                </div>
-
-                <div>
-                  <div className="col-span-3 sm:col-span-2">
-                    <label htmlFor="minCounterpartyBid" className="block text-sm font-medium text-gray-700"> Min counterparty bid </label>
-                    <div className="mt-1 flex rounded-md shadow-sm">
-                      <input
-                        type="text"
-                        name="minCounterpartyBid"
-                        id="minCounterpartyBid"
-                        className="focus:ring-indigo-500 focus:border-indigo-500 flex-1 block w-full rounded-none rounded-l-md sm:text-sm border-gray-300"
-                        value={config.minCounterpartyBid}
-                        onChange={(evt) => setConfig({
-                          ...config,
-                          minCounterpartyBid: evt.target.value
-                        })}
-                      />
-                      <span className="inline-flex items-center px-3 rounded-r-md border border-l-0 border-gray-300 bg-gray-50 text-gray-500 text-sm"> ETH </span>
-                    </div>
-                    <p className="mt-2 text-sm text-gray-500">最小的对手出价，如果为0，则无限制.</p>
-                  </div>
-                </div>
-
-                <div>
-                  <div className="col-span-3 sm:col-span-2">
-                    <label htmlFor="maxCounterpartyBid" className="block text-sm font-medium text-gray-700"> Max counterparty bid </label>
-                    <div className="mt-1 flex rounded-md shadow-sm">
-                      <input
-                        type="text"
-                        name="maxCounterpartyBid"
-                        id="maxCounterpartyBid"
-                        className="focus:ring-indigo-500 focus:border-indigo-500 flex-1 block w-full rounded-none rounded-l-md sm:text-sm border-gray-300"
-                        value={config.maxCounterpartyBid}
-                        onChange={(evt) => setConfig({
-                          ...config,
-                          maxCounterpartyBid: evt.target.value
-                        })}
-                      />
-                      <span className="inline-flex items-center px-3 rounded-r-md border border-l-0 border-gray-300 bg-gray-50 text-gray-500 text-sm"> ETH </span>
-                    </div>
-                    <p className="mt-2 text-sm text-gray-500">最大的对手出价，如果为0，则无限制</p>
-                  </div>
-                </div>
-
-              </div>
-              <div className="px-4 py-3 bg-gray-50 text-right sm:px-6">
-                <Button color='blue' loading={submiting} appearance="primary" onClick={() => createGamble()}>Create</Button>
-              </div>
-            </div>
+          <div className="ml-3 text-sm">
+            <label htmlFor="random-onchain" className="font-medium text-gray-700"> Use OnChain(block) Random </label>
+            <p className="text-gray-500">on chain mode tips.</p>
+          </div>
+        </div>
+        <div className="flex items-start">
+          <div className="flex items-center h-5">
+            <input
+              onChange={(evt) => setConfig({
+                ...config,
+                chainRandomMode: false
+              })}
+              id="random-vrf" name="random-mode" type="radio" value={config.chainRandomMode} className="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300" />
+          </div>
+          <div className="ml-3 text-sm">
+            <label htmlFor="random-vrf" className="font-medium text-gray-700"> Use Chianlink(VRF) Random </label>
+            <p className="text-gray-500">vrf mode tips.</p>
           </div>
         </div>
       </div>
-    </main>
-  </>
+    </div>
+
+    <div className='double-form'>
+      <div className='form-item'>
+        <div className='title'>Floor price</div>
+        <div className='desc'>在到达deadline之前，只要筹足了最小筹集资金，可以随时开始;如果到达了deadline仍然没有摇奖，那么游戏结束，用户可以把钱提走，发起者也可以把NFT提走</div>
+        <div className='input'>
+          <InputGroup>
+            <InputNumber
+              step={0.01}
+              value={config.minCounterpartyBid}
+              onChange={(minCounterpartyBid) => setConfig({ ...config, minCounterpartyBid })}
+            />
+            <InputGroup.Addon>
+              <Image src='/img/usage/eth.png' width='16' height='16'></Image>
+              <span>ETH</span>
+            </InputGroup.Addon>
+          </InputGroup>
+        </div>
+      </div>
+      <div className='form-item'>
+        <div className='title'>Ceil price</div>
+        <div className='desc'>在到达deadline之前，只要筹足了最小筹集资金，可以随时开始;如果到达了deadline仍然没有摇奖，那么游戏结束，用户可以把钱提走，发起者也可以把NFT提走</div>
+        <div className='input'>
+          <InputGroup>
+            <InputNumber
+              step={0.01}
+              value={config.maxCounterpartyBid}
+              onChange={(maxCounterpartyBid) => setConfig({ ...config, maxCounterpartyBid })}
+            />
+            <InputGroup.Addon>
+              <Image src='/img/usage/eth.png' width='16' height='16'></Image>
+              <span>ETH</span>
+            </InputGroup.Addon>
+          </InputGroup>
+        </div>
+      </div>
+    </div>
+
+    <div className='form-item'>
+      <div className='title'>Initiator win probability</div>
+      <div className='desc'>设置发起者获胜的概率</div>
+      <div className='input'>
+        <Slider
+          defaultValue={config.creatorWinProbability / 100}
+          min={1}
+          step={1}
+          max={100}
+          progress
+          tooltip={false}
+          handleTitle={`${config.creatorWinProbability / 100}%`}
+          onChange={(val) => {
+            setConfig({
+              ...config,
+              creatorWinProbability: val * 100
+            })
+          }}
+        />
+      </div>
+    </div>
+
+    <Button color='blue' loading={submiting} appearance="primary" onClick={() => createGamble()}>Create</Button>
+  </div>
 }
