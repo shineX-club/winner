@@ -384,11 +384,11 @@
     flex-direction: row;
     justify-content: space-between;
     align-items: center;
-    margin: 0 -10px;
+    margin: 0 -10px 50px;
 
     .form-item {
       flex: 1;
-      margin: 10px;
+      margin: 0 10px;
     }
   }
 }
@@ -655,5 +655,102 @@
 
   &-line-inner {
     background: #F1F2F3 !important;
+  }
+}
+
+.rs-slider-progress-bar {
+  background: linear-gradient(274.01deg, #08BBE4 1.58%, #54E08C 96.99%);
+}
+
+.custom-slider {
+  margin-top: 35px;
+
+  .rs-slider-handle {
+    background: linear-gradient(274.01deg, #08BBE4 1.58%, #54E08C 96.99%);
+    text-align: center;
+    margin-left: -25px;
+    top: -25px;
+    width: 51px;
+    height: 51px;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: box-shadow 0.3s ease-in-out, transform 0.3s ease-in-out;
+    font-weight: 600;
+    font-size: 16px;
+    line-height: 25px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    &:before {
+      display: none;
+    }
+
+    input {
+      display: block;
+      background-color: #fff;
+    }
+
+    &:hover {
+      box-shadow: 0 0 0 8px rgb(52 152 255 / 25%);
+    }
+  }
+
+  &.rs-slider-dragging .rs-slider-handle,
+  &.rs-slider-dragging .rs-slider-handle:hover {
+    box-shadow: none;
+    transform: scale(1.2);
+  }
+}
+
+.price-form {
+.rs-input-number-btn-group-vertical {
+    display: none !important;
+  }
+}
+
+.rs-input-group-addon {
+  background-color: #fff !important;
+}
+
+.radio-form {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  margin: 0 -10px;
+
+  .rs-radio {
+    position: relative;
+    border-radius: 6px;
+    height: 78px;
+    flex: 1;
+    margin: 0 10px;
+    background: #fff;
+    padding: 12px 30px;
+    border: 1px solid #E3E5E7;
+
+    .radio-title {
+      font-weight: 600;
+      font-size: 17px;
+      line-height: 27px;
+      color: #61666D;
+    }
+
+    .radio-desc {
+      font-weight: 600;
+      font-size: 15px;
+      line-height: 27px;
+      color: #9499A0;
+    }
+
+    &-checked {
+      background: linear-gradient(274.01deg, rgba(8, 187, 228, 0.1) 1.58%, rgba(84, 224, 140, 0.1) 96.99%);
+      border-color: #2CCDBC;
+    }
+
+    &-checker {
+      padding-top: 0;
+    }
   }
 }

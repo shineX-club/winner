@@ -1,9 +1,9 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useWeb3React } from '@web3-react/core'
 import { contract } from 'connectors/contract'
 import { ethers } from 'ethers'
 import { toast } from 'react-toastify'
-import { Button, Input, InputNumber, InputGroup, Slider } from 'rsuite'
+import { Button, Radio, RadioGroup, Form, Input, InputNumber, InputGroup, Slider } from 'rsuite'
 import Image from 'next/image'
 import { DateRangePicker } from 'rsuite'
 import startOfWeek from 'date-fns/startOfWeek';
@@ -71,7 +71,7 @@ export default function Create() {
     maxCounterpartyBid: '',
     chainRandomMode: true
   })
-  const [submiting, setSubmiting] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
 
   const setTimeRange = (range) => {
     setConfig({
@@ -139,7 +139,7 @@ export default function Create() {
         return
       }
 
-      setSubmiting(true)
+      setSubmitting(true)
       console.log('convertConfig', convertConfig)
       const estimateGas = await newContract.estimateGas.createGambling(convertConfig)
       console.log(ethers.utils.formatEther(estimateGas))
@@ -155,91 +155,72 @@ export default function Create() {
       }, 1500)
     } catch (err) {
       console.log('createGamble', err)
-      setSubmiting(false)
+      setSubmitting(false)
     }
   }
+
+  const setMaxCounterpartyBid = (val) => {
+    console.log('setMaxCounterpartyBid', val)
+    if (typeof maxUserCount === 'string') {
+      return
+    }
+    const maxCounterpartyBid = maxUserCount / val * config.minCounterpartyBid
+    setConfig({ ...config, maxCounterpartyBid })
+  }
+
+  const maxUserCount = useMemo(() => {
+    if (config.minCounterpartyBid && config.minFundraisingAmount) {
+      return Math.floor(config.minFundraisingAmount / config.minCounterpartyBid)
+    }
+
+    return 'please set price'
+  }, [config])
+
+  const minUserCount = useMemo(() => {
+    if (config.minFundraisingAmount && config.maxCounterpartyBid) {
+      return Math.floor(config.minFundraisingAmount / config.maxCounterpartyBid)
+    }
+
+    return ''
+  }, [config])
 
   return <div className='create-container'>
     <div className='banner'>
       <Image width='561' height='90' src='/img/usage/create-banner.svg'></Image>
     </div>
-    <div className='form-item'>
-      <div className='title'>Set time</div>
-      <div className='desc'>在到达deadline之前，只要筹足了最小筹集资金，可以随时开始;如果到达了deadline仍然没有摇奖，那么游戏结束，用户可以把钱提走，发起者也可以把NFT提走</div>
-      <div className='input'>
-        <DateRangePicker
-          format="yyyy-MM-dd HH:mm:ss"
-          placeholder="Select Date Range"
-          ranges={predefinedRanges}
-          onChange={setTimeRange}
-          defaultCalendarValue={[new Date(Date.now() + 1800000), new Date(Date.now() + 86400 * 2000)]}
-        />
-      </div>
-    </div>
-
-    <div className='form-item'>
-      <div className='title'>Target price</div>
-      <div className='desc'>最小集资金额，只有在到达deadline之前募集够足够的金额，才能开始赌局.</div>
-      <div className='input'>
-        <InputGroup>
-          <InputNumber
-            step={0.01}
-            value={config.minFundraisingAmount}
-            onChange={(minFundraisingAmount) => setConfig({ ...config, minFundraisingAmount })}
-          />
-          <InputGroup.Addon>
-            <Image src='/img/usage/eth.png' width='16' height='16'></Image>
-            <span>ETH</span>
-          </InputGroup.Addon>
-        </InputGroup>
-      </div>
-    </div>
-
-    <div className='form-item'>
-      <div className='title'>Chain Random Mode</div>
-      <div className='desc'>在到达deadline之前，只要筹足了最小筹集资金，可以随时开始;如果到达了deadline仍然没有摇奖，那么游戏结束，用户可以把钱提走，发起者也可以把NFT提走</div>
-      <div className='input'>
-        <div className="flex items-start">
-          <div className="flex items-center h-5">
-            <input
-              onChange={(evt) => setConfig({
-                ...config,
-                chainRandomMode: true
-              })}
-              id="random-onchain" name="random-mode" type="radio" checked value={config.chainRandomMode} className="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300" />
-          </div>
-          <div className="ml-3 text-sm">
-            <label htmlFor="random-onchain" className="font-medium text-gray-700"> Use OnChain(block) Random </label>
-            <p className="text-gray-500">on chain mode tips.</p>
-          </div>
-        </div>
-        <div className="flex items-start">
-          <div className="flex items-center h-5">
-            <input
-              onChange={(evt) => setConfig({
-                ...config,
-                chainRandomMode: false
-              })}
-              id="random-vrf" name="random-mode" type="radio" value={config.chainRandomMode} className="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300" />
-          </div>
-          <div className="ml-3 text-sm">
-            <label htmlFor="random-vrf" className="font-medium text-gray-700"> Use Chianlink(VRF) Random </label>
-            <p className="text-gray-500">vrf mode tips.</p>
-          </div>
-        </div>
-      </div>
-    </div>
 
     <div className='double-form'>
       <div className='form-item'>
-        <div className='title'>Floor price</div>
-        <div className='desc'>在到达deadline之前，只要筹足了最小筹集资金，可以随时开始;如果到达了deadline仍然没有摇奖，那么游戏结束，用户可以把钱提走，发起者也可以把NFT提走</div>
+        <div className='title'>Set Date Range</div>
+        <div className='desc'>拍卖时间段</div>
         <div className='input'>
-          <InputGroup>
+          <DateRangePicker
+            size='lg'
+            block
+            format="yyyy-MM-dd HH:mm:ss"
+            placeholder="Select Date Range"
+            ranges={predefinedRanges}
+            onChange={setTimeRange}
+            defaultCalendarValue={[new Date(Date.now() + 1800000), new Date(Date.now() + 86400 * 2000)]}
+          />
+        </div>
+      </div>
+      <div className='form-item'></div>
+    </div>
+
+    <div className='double-form price-form'>
+      <div className='form-item'>
+        <div className='intro'>
+          <div className='title'>Floor price</div>
+          <div className='desc'>你愿意卖出的最低价格（建议低于市场价），大多数情况下你的 NFT 会以这个价格出售</div>
+        </div>
+        <div className='input'>
+          <InputGroup size='lg'>
             <InputNumber
               step={0.01}
+              min={0}
               value={config.minCounterpartyBid}
-              onChange={(minCounterpartyBid) => setConfig({ ...config, minCounterpartyBid })}
+              onChange={(minCounterpartyBid) => setConfig({ ...config, minCounterpartyBid, maxCounterpartyBid: '' })}
             />
             <InputGroup.Addon>
               <Image src='/img/usage/eth.png' width='16' height='16'></Image>
@@ -248,15 +229,19 @@ export default function Create() {
           </InputGroup>
         </div>
       </div>
+
       <div className='form-item'>
-        <div className='title'>Ceil price</div>
-        <div className='desc'>在到达deadline之前，只要筹足了最小筹集资金，可以随时开始;如果到达了deadline仍然没有摇奖，那么游戏结束，用户可以把钱提走，发起者也可以把NFT提走</div>
+        <div className='intro'>
+          <div className='title'>Ceil price</div>
+          <div className='desc'>你想要卖出的最高金额（应该高于市场价），有很小的概率你的 NFT 会以这个价格出售</div>
+        </div>
         <div className='input'>
-          <InputGroup>
+          <InputGroup size='lg'>
             <InputNumber
               step={0.01}
-              value={config.maxCounterpartyBid}
-              onChange={(maxCounterpartyBid) => setConfig({ ...config, maxCounterpartyBid })}
+              min={0}
+              value={config.minFundraisingAmount}
+              onChange={(minFundraisingAmount) => setConfig({ ...config, minFundraisingAmount, maxCounterpartyBid: '' })}
             />
             <InputGroup.Addon>
               <Image src='/img/usage/eth.png' width='16' height='16'></Image>
@@ -268,8 +253,8 @@ export default function Create() {
     </div>
 
     <div className='form-item'>
-      <div className='title'>Initiator win probability</div>
-      <div className='desc'>设置发起者获胜的概率</div>
+      <div className='title'>Ceil price probability</div>
+      <div className='desc'>设置有多大的概率可以以最高价格出售，这个概率越低买家就越多，概率越高买家就越少</div>
       <div className='input'>
         <Slider
           defaultValue={config.creatorWinProbability / 100}
@@ -277,6 +262,7 @@ export default function Create() {
           step={1}
           max={100}
           progress
+          className="custom-slider"
           tooltip={false}
           handleTitle={`${config.creatorWinProbability / 100}%`}
           onChange={(val) => {
@@ -289,6 +275,59 @@ export default function Create() {
       </div>
     </div>
 
-    <Button color='blue' loading={submiting} appearance="primary" onClick={() => createGamble()}>Create</Button>
+    <div className='double-form'>
+      <div className='form-item'>
+        <div className='title'>Min user count (optional)</div>
+        <div className='desc'>最少可以参与拍卖的人数（当你希望有更多的人可以参与拍卖时可以设置这个参数）</div>
+        <div className='input'>
+          <InputNumber
+            size='lg'
+            step={1}
+            max={typeof maxUserCount === 'string' ? 1 : maxUserCount}
+            min={1}
+            value={minUserCount}
+            onChange={setMaxCounterpartyBid}
+          />
+        </div>
+      </div>
+      <div className='form-item'>
+        <div className='title'>Max user count (autofill)</div>
+        <div className='desc'>最多可以参与拍卖的人数（由 Floor price 和 Ceil price 自动控制）</div>
+        <div className='input'>
+          <Input
+            size='lg'
+            disabled
+            value={maxUserCount}
+          />
+        </div>
+      </div>
+    </div>
+
+    <Form.Group controlId="radioList">
+      <RadioGroup name="radioList" defaultValue={config.chainRandomMode} onChange={(chainRandomMode) => {
+        setConfig({ ...config, chainRandomMode })
+      }}>
+        <div className='form-item'>
+          <div className='title'>Chain Random Mode</div>
+          <div className='desc'>选择判断结果的随机方式，每种方式都能够保障结果的随机性，各有优劣</div>
+          <div className='radio-form'>
+            <Radio value={true}>
+              <div className='radio-bg'>
+                <div className='radio-title'>Use OnChain(block) Random</div>
+                <div className='radio-desc'>随机性较安全，且免费</div>
+              </div>
+            </Radio>
+            <Radio value={false}>
+              <div className='radio-bg'>
+                <div className='radio-title'>Use Chianlink(VRF) Random</div>
+                <div className='radio-desc'>随机性更安全，但更贵</div>
+              </div>
+            </Radio>
+          </div>
+        </div>
+      </RadioGroup>
+    </Form.Group>
+
+    <Button color='blue' loading={submitting} appearance="primary" onClick={() => createGamble()}>Create</Button>
   </div>
 }
