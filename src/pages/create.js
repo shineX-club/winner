@@ -83,6 +83,10 @@ export default function Create() {
 
   const createGamble = async () => {
     try {
+      if (submitting) {
+        return
+      }
+
       if (!account || !provider) {
         toast("Please Connect Wallet First !")
         return
@@ -292,7 +296,7 @@ export default function Create() {
       </div>
       <div className='form-item'>
         <div className='title'>Max user count (autofill)</div>
-        <div className='desc'>最多可以参与拍卖的人数（由 Floor price 和 Ceil price 自动控制）</div>
+        <div className='desc'>最多可以参与拍卖的人数（由 Floor price 和 Ceil price 自动计算无需手动指定）</div>
         <div className='input'>
           <Input
             size='lg'
@@ -328,6 +332,6 @@ export default function Create() {
       </RadioGroup>
     </Form.Group>
 
-    <Button color='blue' loading={submitting} appearance="primary" onClick={() => createGamble()}>Create</Button>
+    <button className='linear-btn' onClick={() => createGamble()}>Create</button>
   </div>
 }

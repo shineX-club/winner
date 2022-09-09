@@ -13,6 +13,7 @@ html {
 body {
   min-height: 100%;
   background: #F8F9FD !important;
+  font-family: -apple-system,BlinkMacSystemFont,Helvetica Neue,PingFang SC,Microsoft YaHei,Source Han Sans SC,Noto Sans CJK SC,WenQuanYi Micro Hei,sans-serif;
 }
 
 abbr[title] {

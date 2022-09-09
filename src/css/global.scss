@@ -354,7 +354,7 @@
 
 .create-container {
   width: 800px;
-  margin: 0 auto;
+  margin: 0 auto 60px;
 
   .banner {
     margin-top: 40px;
@@ -372,7 +372,7 @@
 
     .desc {
       font-weight: 400;
-      font-size: 16px;
+      font-size: 12px;
       line-height: 22px;
       color: #9499A0;
       margin-bottom: 16px;
@@ -390,6 +390,15 @@
       flex: 1;
       margin: 0 10px;
     }
+  }
+
+  .linear-btn {
+    padding: 15px 70px;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 20px;
+    line-height: 31px;
+    color: #18191C;
   }
 }
 
@@ -482,6 +491,7 @@
   .bg {
     width: 100%;
     height: auto;
+    aspect-ratio: 1919 / 1080;
   }
 
   .title {
@@ -493,7 +503,7 @@
 
   .desc {
     font-weight: 400;
-    font-size: 18px;
+    font-size: 16px;
     line-height: 28px;
     text-align: center;
     color: #61666D;
@@ -581,12 +591,68 @@
 }
 
 .spaces-container {
-  margin-bottom: 150px;
+  padding-bottom: 150px;
+  min-height: 100vh;
 
   .list-view {
     display: flex;
     width: 1220px;
     margin: 0 auto;
+    flex-wrap: wrap;
+  }
+
+  .game-item-loader {
+    width: 285px;
+    height: 400px;
+    background-color: #fff;
+    padding: 10px;
+    border: 1px solid #E3E5E7;
+    border-radius: 16px;
+    margin: 10px;
+
+    div {
+      background: #F1F2F3;
+    }
+
+    .game-image {
+      width: 100%;
+      aspect-ratio: 1;
+      margin-bottom: 10px;
+      border-radius: 12px;
+    }
+
+    .game-name {
+      height: 23px;
+      border-radius: 6px;
+      margin-bottom: 10px;
+    }
+
+    .game-desc {
+      height: 17px;
+      border-radius: 10px;
+      margin-bottom: 28px;
+    }
+
+    .game-footer {
+      display: flex;
+      flex-direction: row;
+      justify-content: flex-start;
+      align-items: center;
+      background: #fff;
+
+      .game-avatar {
+        width: 26px;
+        height: 26px;
+        border-radius: 50%;
+        margin-right: 8px;
+      }
+
+      .game-address {
+        width: 80px;
+        height: 22px;
+        border-radius: 6px;
+      }
+    }
   }
 
   .game-flow-item {
@@ -711,6 +777,12 @@
 
 .rs-input-group-addon {
   background-color: #fff !important;
+  font-size: 12px !important;
+  line-height: 12px !important;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
 }
 
 .radio-form {
@@ -739,7 +811,7 @@
 
     .radio-desc {
       font-weight: 600;
-      font-size: 15px;
+      font-size: 12px;
       line-height: 27px;
       color: #9499A0;
     }

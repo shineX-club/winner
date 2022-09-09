@@ -13,6 +13,18 @@ export const convertAddress = (address, pre = 6, sub = 4) => {
   return address.slice(0, pre) + '...' + address.slice(-sub)
 }
 
+function GameLoader() {
+  return <div className="game-item-loader">
+    <div className="game-image"></div>
+    <div className="game-name"></div>
+    <div className="game-desc"></div>
+    <div className="game-footer">
+      <div className="game-avatar"></div>
+      <div className="game-address"></div>
+    </div>
+  </div>
+}
+
 function GameItem({ item }) {
   console.log('item', item)
   return <div className="game-flow-item">
@@ -79,7 +91,6 @@ export default function Spaces() {
   })
 
   const getNftInfo = async ({ address, tokenId }) => {
-    console.log('getNftInfo', address, tokenId)
     const data = await $fetch(`https://testnets-api.opensea.io/api/v1/assets?asset_contract_address=${address}&token_ids=${tokenId}`)
     return data.assets[0]
   }
@@ -117,7 +128,7 @@ export default function Spaces() {
           tokenId: _.collections[0].tokenId.toString()
         })
       }))
-
+      console.log('nfts', nfts)
       data = data.map((item, index) => {
         return {
           ...item,
@@ -152,9 +163,9 @@ export default function Spaces() {
           })
         })}
         firstloadingSlot={() => {
-          return <>
-            first loading
-          </>
+          return [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map(item => {
+            return <GameLoader key={item}></GameLoader>
+          })
         }}
         nothingSlot={() => {
           return <>
