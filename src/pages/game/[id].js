@@ -4,7 +4,7 @@ import { useEffect, useState, useMemo } from 'react'
 import { contract } from 'connectors/contract'
 import { useWeb3React } from '@web3-react/core'
 import { $fetch } from 'ohmyfetch'
-import { Progress } from 'rsuite'
+import { Progress, InputNumber } from 'rsuite'
 import SelectNFTModal from '@/components/SelectNFTModal'
 import { toast } from 'react-toastify'
 import NFTBox from '@/components/NFTBox'
@@ -45,14 +45,15 @@ export default function Game() {
       const newContract = contract.connect(provider.getSigner())
       let result = await newContract.getGamblingStatus(id)
       setConfig({
-        minCounterpartyBid: parseFloat(result.record.config.minCounterpartyBid.toString()),
-        maxCounterpartyBid: parseFloat(result.record.config.maxCounterpartyBid.toString()),
-        minFundraisingAmount: parseFloat(result.record.config.minFundraisingAmount.toString()),
+        minCounterpartyBid: ethers.utils.formatEther(result.record.config.minCounterpartyBid),
+        maxCounterpartyBid: ethers.utils.formatEther(result.record.config.maxCounterpartyBid),
+        minFundraisingAmount: ethers.utils.formatEther(result.record.config.minFundraisingAmount),
+        maxFundraisingAmount: ethers.utils.formatEther(result.record.config.maxFundraisingAmount),
+        fundraisingAmount: ethers.utils.formatEther(result.fundraisingAmount),
         creatorWinProbability: parseFloat(result.record.config.creatorWinProbability.toString()),
         chainRandomMode: result.record.config.chainRandomMode,
         fundraisingStartTime: result.record.config.fundraisingStartTime.toString() * 1000,
-        deadline: result.record.config.deadline.toString() * 1000,
-        fundraisingAmount: parseFloat(result.fundraisingAmount.toString())
+        deadline: result.record.config.deadline.toString() * 1000
       })
       setGame(result)
       console.log('game', result)
@@ -128,8 +129,7 @@ export default function Game() {
         return
       }
   
-      const numVal = parseFloat(value)
-  
+      const numVal = parseFloat(value) || parseFloat(config?.minCounterpartyBid)
       if (numVal <= 0) {
         toast('不能小于0')
         return
@@ -140,12 +140,11 @@ export default function Game() {
         return
       }
   
-      if (config.maxCounterpartyBid && config.maxCounterpartyBid < numVal) {
+      if (parseFloat(config.maxCounterpartyBid) && parseFloat(config.maxCounterpartyBid) < numVal) {
         toast('不能大于最大值')
         return
       }
 
-      console.log('value', ethers.utils.parseEther(value))
       setLoadingState({
         ...loadingState,
         join: true
@@ -156,12 +155,13 @@ export default function Game() {
        */
       const referer = '0xb400388f00f241aEc3665a36c6038567a7d423B9'
       const tx = await newContract.joinGambling(id, referer, {
-        value: ethers.utils.parseEther(value)
+        value: ethers.utils.parseEther(numVal.toString())
       })
   
       console.log("tx", tx);
       const receipt = await tx.wait();
       console.log("receipt", receipt);
+      window.location.reload()
     } catch (err) {
       console.log('joinGame', err)
     } finally {
@@ -257,10 +257,6 @@ export default function Game() {
 
   const startAppendNFT = () => {
     setShowSelect(true)
-  }
-
-  const startAppendETH = () => {
-
   }
 
   const claimOneNFT = async (nft, index) => {
@@ -373,30 +369,6 @@ export default function Game() {
     return ''
   }, [game, config])
 
-  const buttonText = useMemo(() => {
-    if (gameStatus === 'Finshed') {
-      return 'Participate in the next round'
-    }
-
-    if (gameStatus === 'isOpeninig') {
-      return 'openinig...'
-    }
-
-    if (gameStatus === 'waiting') {
-      return 'Start time: ' + new Date(config?.fundraisingStartTime).toLocaleString()
-    }
-
-    if (gameStatus === 'ended') {
-      return 'End time: ' + new Date(config?.deadline).toLocaleString()
-    }
-
-    if (gameStatus === 'open') {
-      return isOwner ? 'NFT for Gamble' : 'ETH for Gamble'
-    }
-
-    return 'loading...'
-  }, [gameStatus])
-
   const canAppendNFT = useMemo(() => {
     return isOwner && gameStatus && gameStatus !== 'ended' && gameStatus !== 'Finshed'
   }, [isOwner, gameStatus])
@@ -416,6 +388,34 @@ export default function Game() {
   const canClaimETH = useMemo(() => {
     return myBid > 0 || account === game?.record.creator
   }, [myBid, game, account])
+
+  const minOffer = useMemo(() => {
+    if (!config) {
+      return 0
+    }
+
+    return Math.min(...[
+      parseFloat(config?.minCounterpartyBid),
+      config?.maxFundraisingAmount - config?.fundraisingAmount
+    ])
+  }, [config])
+
+  const maxOffer = useMemo(() => {
+    if (!config) {
+      return 0
+    }
+
+    if (parseFloat(config?.maxCounterpartyBid)) {
+      return Math.min(...[
+        parseFloat(config?.maxCounterpartyBid),
+        config?.maxFundraisingAmount - config?.fundraisingAmount
+      ])
+    }
+
+    return Math.min(...[
+      config?.minFundraisingAmount - config?.fundraisingAmount
+    ])
+  }, [config])
 
   useEffect(() => {
     if (!gameStatus || gameStatus === 'waiting') {
@@ -447,6 +447,9 @@ export default function Game() {
     </>
   }
   console.log('myBid', myBid)
+  console.log('minOffer', minOffer)
+  console.log('maxOffer', maxOffer)
+  console.log('config', config)
   return <>
     <div className='game-container'>
       <div className='game-left'>
@@ -556,24 +559,24 @@ export default function Game() {
             </div>
             <div className='game-label-meta-item'>
               <div className='game-label-meta-item-key'>
-                <span>Total Price</span>
-                &nbsp;
-                <Image width='13' height='13' src='/img/usage/faq.png'></Image>
-              </div>
-              <div className='game-label-meta-item-val'>
-                <Image width='15' height='16' src='/img/usage/eth.png'></Image>
-                <span className='color-text'>{ethers.utils.formatEther(config?.minFundraisingAmount.toString())}</span>
-              </div>
-            </div>
-            <div className='game-label-meta-item'>
-              <div className='game-label-meta-item-key'>
                 <span>Floor Price</span>
                 &nbsp;
                 <Image width='13' height='13' src='/img/usage/faq.png'></Image>
               </div>
               <div className='game-label-meta-item-val'>
                 <Image width='15' height='16' src='/img/usage/eth.png'></Image>
-                <span className='color-text'>{ethers.utils.formatEther(config?.minCounterpartyBid.toString())}</span>
+                <span className='color-text'>{config?.minCounterpartyBid}</span>
+              </div>
+            </div>
+            <div className='game-label-meta-item'>
+              <div className='game-label-meta-item-key'>
+                <span>Total Price</span>
+                &nbsp;
+                <Image width='13' height='13' src='/img/usage/faq.png'></Image>
+              </div>
+              <div className='game-label-meta-item-val'>
+                <Image width='15' height='16' src='/img/usage/eth.png'></Image>
+                <span className='color-text'>{config?.minFundraisingAmount}</span>
               </div>
             </div>
             <div className='game-label-meta-item'>
@@ -677,10 +680,20 @@ export default function Game() {
                                     <span>waiting...</span>
                                   </button>
                                 </> : <>
-                                  <button className='linear-btn' onClick={() => startAppendETH()}>
-                                    <Image width='24' height='24' src='/img/usage/loc.svg'></Image>
-                                    <span>Make offer</span>
-                                  </button>
+                                  <div className='footer-control'>
+                                    <InputNumber
+                                      size='lg'
+                                      postfix="ETH"
+                                      min={minOffer}
+                                      max={maxOffer}
+                                      defaultValue={config?.minCounterpartyBid}
+                                      onChange={setValue}
+                                    />
+                                    <button className='linear-btn' onClick={() => joinGame()}>
+                                      <Image width='24' height='24' src='/img/usage/loc.svg'></Image>
+                                      <span>Make offer</span>
+                                    </button>
+                                  </div>
                                 </>
                               }
                               </>
