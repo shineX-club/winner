@@ -89,10 +89,10 @@ export default function Create() {
       }
 
       const convertConfig = {
-        minFundraisingAmount: ethers.FixedNumber.from(config.minFundraisingAmount),
+        minFundraisingAmount: ethers.utils.parseEther(config.minFundraisingAmount.toString()),
         creatorWinProbability: ethers.BigNumber.from(config.creatorWinProbability),
-        maxCounterpartyBid: ethers.FixedNumber.from(config.maxCounterpartyBid || 0),
-        minCounterpartyBid: ethers.FixedNumber.from(config.minCounterpartyBid || 0),
+        maxCounterpartyBid: ethers.utils.parseEther((config.maxCounterpartyBid || 0).toString()),
+        minCounterpartyBid: ethers.utils.parseEther((config.minCounterpartyBid || 0).toString()),
         fundraisingStartTime: ethers.BigNumber.from(convertTime(config.fundraisingStartTime)),
         deadline: ethers.BigNumber.from(convertTime(config.deadline)),
         chainRandomMode: config.chainRandomMode
@@ -139,9 +139,8 @@ export default function Create() {
       }
 
       setSubmitting(true)
-      console.log('convertConfig', convertConfig)
       const estimateGas = await newContract.estimateGas.createGambling(convertConfig)
-      console.log(ethers.utils.formatEther(estimateGas))
+      console.log('gas', ethers.utils.formatEther(estimateGas))
       toast('合约提交中')
       const tx = await newContract.createGambling(convertConfig)
       console.log("tx", tx);

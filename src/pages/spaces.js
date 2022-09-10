@@ -175,10 +175,8 @@ export default function Spaces() {
             loading
           </>
         }}
-        firstErrorSlot={() => {
-          return <>
-            first error
-          </>
+        firstErrorSlot={(err) => {
+          return <div className="error-tips">Ops...{err?.message}</div>
         }}
       ></FlowList> : <div className="error-tips">please connect your wallet first</div>
     }
