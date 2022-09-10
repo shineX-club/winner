@@ -3,21 +3,13 @@ import { useWeb3React } from '@web3-react/core'
 import { contract } from 'connectors/contract'
 import { ethers } from 'ethers'
 import { toast } from 'react-toastify'
-import { Button, Radio, RadioGroup, Form, Input, InputNumber, InputGroup, Slider } from 'rsuite'
+import { Radio, RadioGroup, Form, Input, InputNumber, InputGroup, Slider } from 'rsuite'
 import Image from 'next/image'
 import { DateRangePicker } from 'rsuite'
 import startOfWeek from 'date-fns/startOfWeek';
 import endOfWeek from 'date-fns/endOfWeek';
 import endOfDay from 'date-fns/endOfDay'
 import addDays from 'date-fns/addDays';
-
-const pad = (number) => {
-  if (String(number).length === 1) {
-    return `0${number}`
-  }
-
-  return number
-}
 
 const predefinedRanges = [
   {
@@ -30,7 +22,9 @@ const predefinedRanges = [
   },
   {
     label: 'This week',
-    value: [new Date(), endOfWeek(new Date())]
+    value: [new Date(), endOfWeek(new Date(), {
+      weekStartsOn: 1
+    })]
   },
   {
     label: 'Next week',
@@ -38,20 +32,12 @@ const predefinedRanges = [
     value: value => {
       const [start = new Date()] = value || [];
       return [
-        addDays(startOfWeek(start, { weekStartsOn: 0 }), 7),
-        addDays(endOfWeek(start, { weekStartsOn: 0 }), 7)
+        addDays(startOfWeek(start, { weekStartsOn: 1 }), 7),
+        addDays(endOfWeek(start, { weekStartsOn: 1 }), 7)
       ];
     }
   }
 ]
-
-const convertDate = (ts) => {
-  const time = new Date(ts).toLocaleDateString()
-
-  const arr = time.split('/')
-
-  return arr[0] + '-' + pad(arr[1]) + '-' + pad(arr[2])
-}
 
 const convertTime = (time) => {
   return parseInt(new Date(time).getTime() / 1000)
@@ -61,12 +47,12 @@ export default function Create() {
   const { account, provider } = useWeb3React()
   const [config, setConfig] = useState({
     // 最小集资金额
-    minFundraisingAmount: '0.01',
-    creatorWinProbability: 3000,
-    fundraisingStartTime: convertDate(Date.now()),
-    deadline: convertDate(Date.now() + 86400 * 1000 * 3),
+    minFundraisingAmount: '0.03',
     // 最小出资金额
-    minCounterpartyBid: '',
+    minCounterpartyBid: '0.01',
+    creatorWinProbability: 3000,
+    fundraisingStartTime: '',
+    deadline: '',
     // 最大出资金额
     maxCounterpartyBid: '',
     chainRandomMode: true
@@ -88,7 +74,7 @@ export default function Create() {
       }
 
       if (!account || !provider) {
-        toast("Please Connect Wallet First !")
+        toast("Please Connect Your Wallet First!")
         return
       }
 
@@ -121,10 +107,13 @@ export default function Create() {
       }
 
       if (
+        // 每个人的最大出资不能小于0
         parseFloat(convertConfig.maxCounterpartyBid.toString()) < 0 ||
-        parseFloat(convertConfig.minCounterpartyBid.toString()) < 0 ||
-        parseFloat(convertConfig.minFundraisingAmount.toString()) <= 0 ||
-        parseFloat(convertConfig.maxCounterpartyBid.toString()) < parseFloat(convertConfig.minCounterpartyBid.toString()) ||
+        // 每个人的出资金额不能小于等于0（地板价）
+        parseFloat(convertConfig.minCounterpartyBid.toString()) <= 0 ||
+        // 地板价不能大于目标价
+        parseFloat(convertConfig.minCounterpartyBid.toString()) > parseFloat(convertConfig.minFundraisingAmount.toString()) ||
+        // 最高价不能大于目标价
         parseFloat(convertConfig.maxCounterpartyBid.toString()) > parseFloat(convertConfig.minFundraisingAmount.toString())
       ) {
         toast('出资金额不对', {
@@ -168,13 +157,25 @@ export default function Create() {
     if (typeof maxUserCount === 'string') {
       return
     }
-    const maxCounterpartyBid = maxUserCount / val * config.minCounterpartyBid
+    if (maxUserCount === 1) {
+      setConfig({ ...config, maxCounterpartyBid: config.minCounterpartyBid })
+      return
+    }
+    const maxCounterpartyBid = ethers.BigNumber.formatEther(
+      ethers.BigNumber.from(
+        ethers.utils.parseEther(config.minCounterpartyBid)
+      ).mul(maxUserCount).div(val)
+    )
     setConfig({ ...config, maxCounterpartyBid })
   }
 
   const maxUserCount = useMemo(() => {
     if (config.minCounterpartyBid && config.minFundraisingAmount) {
-      return Math.floor(config.minFundraisingAmount / config.minCounterpartyBid)
+      return Math.floor(
+        ethers.BigNumber.from(ethers.utils.parseEther(config.minFundraisingAmount)).div(
+          ethers.BigNumber.from(ethers.utils.parseEther(config.minCounterpartyBid))
+        )
+      )
     }
 
     return 'please set price'
@@ -182,10 +183,14 @@ export default function Create() {
 
   const minUserCount = useMemo(() => {
     if (config.minFundraisingAmount && config.maxCounterpartyBid) {
-      return Math.floor(config.minFundraisingAmount / config.maxCounterpartyBid)
+      return Math.floor(
+        ethers.BigNumber.from(ethers.utils.parseEther(config.minFundraisingAmount)).div(
+          ethers.BigNumber.from(ethers.utils.parseEther(config.maxCounterpartyBid))
+        )
+      )
     }
 
-    return ''
+    return 1
   }, [config])
 
   return <div className='create-container'>
@@ -196,7 +201,7 @@ export default function Create() {
     <div className='double-form'>
       <div className='form-item'>
         <div className='title'>Set Date Range</div>
-        <div className='desc'>拍卖时间段</div>
+        <div className='desc'>设置拍卖开始和结束的时间</div>
         <div className='input'>
           <DateRangePicker
             size='lg'
@@ -204,6 +209,8 @@ export default function Create() {
             format="yyyy-MM-dd HH:mm:ss"
             placeholder="Select Date Range"
             ranges={predefinedRanges}
+            isoWeek
+            // defaultValue={[new Date(config.fundraisingStartTime * 1000), new Date(config.deadline * 1000)]}
             onChange={setTimeRange}
             defaultCalendarValue={[new Date(Date.now() + 1800000), new Date(Date.now() + 86400 * 2000)]}
           />
@@ -221,7 +228,6 @@ export default function Create() {
         <div className='input'>
           <InputGroup size='lg'>
             <InputNumber
-              step={0.01}
               min={0}
               value={config.minCounterpartyBid}
               onChange={(minCounterpartyBid) => setConfig({ ...config, minCounterpartyBid, maxCounterpartyBid: '' })}
@@ -242,7 +248,6 @@ export default function Create() {
         <div className='input'>
           <InputGroup size='lg'>
             <InputNumber
-              step={0.01}
               min={0}
               value={config.minFundraisingAmount}
               onChange={(minFundraisingAmount) => setConfig({ ...config, minFundraisingAmount, maxCounterpartyBid: '' })}
@@ -258,7 +263,7 @@ export default function Create() {
 
     <div className='form-item'>
       <div className='title'>Ceil price probability</div>
-      <div className='desc'>设置有多大的概率可以以最高价格出售，这个概率越低买家就越多，概率越高买家就越少</div>
+      <div className='desc'>设置有多大的概率可以以 Ceil price 出售你的 NFT，概率越低买家就越多，概率越高买家就越少；注意：NFT只会以 Floor price 或 Ceil price 出售，不会以中间价格出售</div>
       <div className='input'>
         <Slider
           defaultValue={config.creatorWinProbability / 100}
@@ -282,7 +287,7 @@ export default function Create() {
     <div className='double-form'>
       <div className='form-item'>
         <div className='title'>Min user count (optional)</div>
-        <div className='desc'>最少可以参与拍卖的人数（当你希望有更多的人可以参与拍卖时可以设置这个参数）</div>
+        <div className='desc'>最少可以参与拍卖的人数（当你希望有尽可能多的人参与拍卖时可以调整这个参数）</div>
         <div className='input'>
           <InputNumber
             size='lg'
@@ -324,7 +329,7 @@ export default function Create() {
             <Radio value={false}>
               <div className='radio-bg'>
                 <div className='radio-title'>Use Chianlink(VRF) Random</div>
-                <div className='radio-desc'>随机性更安全，但更贵</div>
+                <div className='radio-desc'>随机性更安全，需收费</div>
               </div>
             </Radio>
           </div>

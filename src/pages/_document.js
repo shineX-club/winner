@@ -17,7 +17,6 @@ export default class Document extends NextDocument {
       <Html lang="en">
         <Head>
           <link rel="icon" href="/img/favico.png" />
-          <title>Winner - A Decentralized NFT Trading Platform</title>
           <meta name="description" content="A decentralized NFT trading platform that supports share-to-earn and leverage"></meta>
           <meta name="keywords" content="crypto,leverage,nft,contract,web3,eth,blockchain,trading,decentralized,share-to-earn"></meta>
         </Head>

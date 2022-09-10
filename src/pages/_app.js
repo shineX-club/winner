@@ -6,6 +6,7 @@ import 'focus-visible'
 import { useState, useEffect, Fragment } from 'react'
 import { Header } from '@/components/Header'
 import Router from 'next/router'
+import Head from 'next/head'
 import ProgressBar from '@badrap/bar-of-progress'
 import { ResizeObserver } from '@juggle/resize-observer'
 import { ToastContainer } from 'react-toastify'
@@ -72,6 +73,9 @@ export default function App({ Component, pageProps, router }) {
 
   return (
     <WalletProvider>
+      <Head>
+        <title>Winner - A Decentralized NFT Trading Platform</title>
+      </Head>
       <Header/>
       <Layout {...layoutProps}>
         <Component section={section} {...pageProps} />

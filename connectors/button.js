@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { metaMask } from "./metaMask.ts";
 import Cookies from 'js-cookie'
 import Image from 'next/image';
+import { toast } from 'react-toastify'
 import { useWeb3React } from '@web3-react/core'
 
 export const convertAddress = (address, pre = 6, sub = 4) => {
@@ -12,7 +13,7 @@ export const connectWallet = async (slient = false) => {
   let connector = metaMask
 
   try {
-    slient ? await connector.connectEagerly() : await connector.activate()
+    slient ? await connector.connectEagerly(4) : await connector.activate(4)
     Cookies.set('wallet-type', 'metamask')
   } catch (err) {
     console.log('connect wallet err', err)
@@ -20,9 +21,11 @@ export const connectWallet = async (slient = false) => {
 }
 
 export default function ConnectorButton() {
-  const { account, connector, name } = useWeb3React()
-
+  const { account, connector, name, chainId } = useWeb3React()
   const login = async () => {
+    if (chainId && chainId.toString() !== '4') {
+      toast('Please switch your chain to Rinkeby first!')
+    }
     await connectWallet()
   }
 

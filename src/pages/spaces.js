@@ -168,9 +168,7 @@ export default function Spaces() {
           })
         }}
         nothingSlot={() => {
-          return <>
-            nothing
-          </>
+          return <div className="error-tips">please create trading first</div>
         }}
         loadingSlot={() => {
           return <>
@@ -182,7 +180,7 @@ export default function Spaces() {
             first error
           </>
         }}
-      ></FlowList> : 'please connect your wallet first'
+      ></FlowList> : <div className="error-tips">please connect your wallet first</div>
     }
   </div>
 }
