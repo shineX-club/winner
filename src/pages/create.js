@@ -90,6 +90,7 @@ export default function Create() {
 
       const convertConfig = {
         minFundraisingAmount: ethers.utils.parseEther(config.minFundraisingAmount.toString()),
+        maxFundraisingAmount: ethers.utils.parseEther(config.minFundraisingAmount.toString()),
         creatorWinProbability: ethers.BigNumber.from(config.creatorWinProbability),
         maxCounterpartyBid: ethers.utils.parseEther((config.maxCounterpartyBid || 0).toString()),
         minCounterpartyBid: ethers.utils.parseEther((config.minCounterpartyBid || 0).toString()),

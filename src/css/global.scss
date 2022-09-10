@@ -66,6 +66,11 @@
   }
 
   .header-right {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+
     .connect-btn {
       width: 205px;
       height: 51px;
@@ -135,11 +140,44 @@
   }
 }
 
-.nft-container {
+.choose-container {
   .nft-title {
+    height: 40px;
+    font-size: 16px;
+    line-height: 40px;
+    font-weight: bold;
+    cursor: pointer;
+    background: #fff;
+    padding-left: 10px;
+    margin-bottom: 5px;
 
+    &:hover {
+      background: #F1F2F3;
+    }
   }
 
+  .nft-name {
+    font-size: 12px;
+    margin-top: 8px;
+    margin-bottom: 10px;
+    font-weight: 600;
+  }
+
+  .nochoose-nft {
+    width: 100%;
+    height: 200px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #F1F2F3;
+    font-size: 20px;
+    font-weight: 700;
+    margin: 10px;
+    border-radius: 5px;
+  }
+}
+
+.nft-container {
   .nft-list {
     display: flex;
     flex-wrap: wrap;
@@ -148,16 +186,25 @@
   .nft-wrap {
     position: relative;
     width: 150px;
-    height: 150px;
-    margin: 10px;
+    min-height: 170px;
+    padding: 10px;
+    border-radius: 5px;
+    overflow: hidden;
+    cursor: pointer;
+
+    &:hover {
+      background-color: #f1f2f3;
+    }
   }
 
   .nft-img {
     display: block;
     width: 100%;
-    height: 100%;
+    aspect-ratio: 1;
     object-fit: contain;
     background-color: #fff;
+    border-radius: 5px;
+    overflow: hidden;
   }
 
   .nft-mask {
@@ -183,6 +230,17 @@
 
     .nft-box {
       margin-bottom: 20px;
+    }
+
+    .empty-nft {
+      width: 400px;
+      height: 400px;
+      background-color: #fff;
+      border-radius: 12px;
+      margin-bottom: 20px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
     }
   }
 
@@ -244,7 +302,7 @@
         justify-content: space-between;
         align-items: center;
         margin-bottom: 20px;
-        width: 75%;
+        // width: 75%;
 
         &-item {
           display: flex;
@@ -289,20 +347,21 @@
         }
 
         &-submit {
-          .main-btn {
+          button {
             border-radius: 12px;
-            font-weight: 600;
-            font-size: 17px;
-            line-height: 27px;
-            height: 51px;
-            padding-left: 30px;
-            padding-right: 30px;
+            padding: 12px 30px;
+
             display: flex;
             flex-direction: row;
             justify-content: center;
             align-items: center;
-          }
 
+            font-weight: 600;
+            font-size: 17px;
+            line-height: 27px;
+            color: #18191C;
+          }
+  
           .gray-btn {
             background: #F1F2F3;
             color: #9499A0;

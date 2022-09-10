@@ -9,7 +9,7 @@ export function Footer(params) {
       </div>
       <div>
         <div className="social">
-          <a href='/' target='_blank'><Image width='28' height='28' src='/img/usage/dt.svg'></Image></a>
+          <a href='https://twitter.com/cryptowinnersh' rel='noreferrer' target='_blank'><Image width='28' height='28' src='/img/usage/dt.svg'></Image></a>
           <a href='/' target='_blank'><Image width='28' height='28' src='/img/usage/discord.svg'></Image></a>
         </div>
       </div>

@@ -12,7 +12,7 @@ export default function SelectNFTModal({ id, account, display, onClose }) {
   const [nfts, setNFTs] = useState([])
   const [loadingList, setLoadingList] = useState({})
   const [selected, setSelected] = useState([])
-  const [collapse, setCollapse] = useState(0)
+  const [collapse, setCollapse] = useState(-1)
 
   const handleClose = () => {
     onClose && onClose()
@@ -90,41 +90,45 @@ export default function SelectNFTModal({ id, account, display, onClose }) {
   return <>
     <Modal size='full' open={display} onClose={handleClose}>
       <Modal.Header>
-        <Modal.Title>Modal Title</Modal.Title>
+        <Modal.Title>Choose NFT</Modal.Title>
       </Modal.Header>
       <Modal.Body>
-        {/* <Placeholder.Paragraph /> */}
-        <p>Support ERC721 Only, Support ETH(mainnet) Only</p>
-        {
-          selected.length && <div className='nft-container'>
-            {
-              selected.map(item => <div key={item.id} className='nft-wrap'>
-                <img className='nft-img' src={item.image_url} />
-                <p className='nft-name'>{item.collection.name}：{item.name}</p>
-              </div>)
-            }
-          </div>
-        }
-        {
-          nfts && Object.keys(nfts).map((address, index) => <div className='nft-container' key={address}>
-            {
-              nfts[address][0] && <p className='nft-title' onClick={() => setCollapse(collapse === index ? -1 : index)}>{nfts[address][0].collection.name}</p>
-            }
-            <div className='nft-list' style={{
-              display: collapse === index ? 'flex' : 'none'
-            }}>
+        <div className='choose-container'>
+          <p className='nft-title'>Support ERC721 Only</p>
+          {
+            selected.length !== 0 ? <div className='nft-container'>
               {
-                nfts[address].map(item => <div className='nft-wrap' key={item.id} onClick={() => appendNFT(item, address)}>
-                  <img className='nft-img' src={item.image_url} loading='lazy' />
+                selected.map(item => <div key={item.id} className='nft-wrap'>
+                  <img className='nft-img' src={item.image_url} />
+                  <p className='nft-name'>{item.collection.name}</p>
                   <p className='nft-name'>{item.name}</p>
-                  {
-                    loadingList[item.id] && <div className='nft-mask' />
-                  }
                 </div>)
               }
+            </div> : <div className='nochoose-nft'>
+              please select NFT first!
             </div>
-          </div>)
-        }
+          }
+          {
+            nfts && Object.keys(nfts).map((address, index) => <div className='nft-container' key={address}>
+              {
+                nfts[address][0] && <p className='nft-title' onClick={() => setCollapse(collapse === index ? -1 : index)}>{nfts[address][0].collection.name}</p>
+              }
+              <div className='nft-list' style={{
+                display: collapse === index ? 'flex' : 'none'
+              }}>
+                {
+                  nfts[address].map(item => <div className='nft-wrap' key={item.id} onClick={() => appendNFT(item, address)}>
+                    <img className='nft-img' src={item.image_url} loading='lazy' />
+                    <p className='nft-name'>{item.name}</p>
+                    {
+                      loadingList[item.id] && <div className='nft-mask' />
+                    }
+                  </div>)
+                }
+              </div>
+            </div>)
+          }
+        </div>
       </Modal.Body>
     </Modal>
   </>

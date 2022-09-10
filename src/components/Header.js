@@ -23,6 +23,8 @@ export function Header() {
       </div>
     </div>
     <div className='header-right'>
+      <Image width='127' height='51' src='/img/usage/share.svg'></Image>
+      &nbsp;&nbsp;&nbsp;&nbsp;
       <ConnectorButton></ConnectorButton>
     </div>
   </header>

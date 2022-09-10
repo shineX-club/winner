@@ -255,6 +255,14 @@ export default function Game() {
     }
   }
 
+  const startAppendNFT = () => {
+    setShowSelect(true)
+  }
+
+  const startAppendETH = () => {
+
+  }
+
   const claimOneNFT = async (nft, index) => {
     try {
       if (gameStatus !== 'ended') {
@@ -443,7 +451,7 @@ export default function Game() {
     <div className='game-container'>
       <div className='game-left'>
         {
-          selected.length && <>
+          selected.length !== 0 ? <>
           {
             selected.map((item, index) => <div key={item.id}>
               <NFTBox item={item}></NFTBox>
@@ -499,7 +507,9 @@ export default function Game() {
                 </div>
               </div>
             </div>
-          </>
+          </> : <div className='empty-nft'>
+            <Image width='163' height='121' src='/img/usage/empty-box.svg'></Image>
+          </div>
         }
       </div>
       <div className='game-right'>
@@ -534,16 +544,6 @@ export default function Game() {
                 {config?.chainRandomMode ? 'OnChain' : 'VRF'}
               </div>
             </div>
-            {/* <div className='game-label-meta-item'>
-              <div className='game-label-meta-item-key'>
-                <span>Deadline</span>
-                &nbsp;
-                <Image width='13' height='13' src='/img/usage/faq.png'></Image>
-              </div>
-              <div className='game-label-meta-item-val'>
-                {new Date(config?.deadline).toLocaleString()}
-              </div>
-            </div> */}
             <div className='game-label-meta-item'>
               <div className='game-label-meta-item-key'>
                 <span>Win Rate</span>
@@ -576,6 +576,16 @@ export default function Game() {
                 <span className='color-text'>{ethers.utils.formatEther(config?.minCounterpartyBid.toString())}</span>
               </div>
             </div>
+            <div className='game-label-meta-item'>
+              <div className='game-label-meta-item-key'>
+                <span>Deadline</span>
+                &nbsp;
+                <Image width='13' height='13' src='/img/usage/faq.png'></Image>
+              </div>
+              <div className='game-label-meta-item-val'>
+                {new Date(config?.deadline).toLocaleString()}
+              </div>
+            </div>
           </div>
           <div className='game-label-footer'>
             <div className='game-label-footer-creator'>
@@ -584,14 +594,110 @@ export default function Game() {
               <span>{convertAddress(game?.record?.creator)}</span>
             </div>
             <div className='game-label-footer-submit'>
-              <button
-                className={classnames(gameStatus === 'ended' ? 'gray-btn' : 'linear-btn', 'main-btn')}
-                disabled={!(gameStatus === 'open' || (gameStatus === 'waiting' && isOwner))}
-              >
-                <Image width={24} height={24} src={(gameStatus === 'waiting' && !isOwner) || gameStatus === 'ended' ? '/img/usage/time.svg' : '/img/usage/loc.svg'}></Image>
-                &nbsp;
-                <span>{buttonText}</span>
-              </button>
+              {
+                gameStatus === 'Finshed' ? <>
+                {
+                  isWinner
+                    ? <button className='linear-btn' onClick={() => claimAllNFT()}>
+                      <Image width='24' height='24' src='/img/usage/loc.svg'></Image>
+                      <span>Claim All NFTs</span>
+                    </button>
+                    : <>
+                    {
+                      canClaimETH
+                      ? <button className='linear-btn' onClick={() => claimETH()}>
+                          <Image width='24' height='24' src='/img/usage/loc.svg'></Image>
+                          <span>Claim My ETH</span>
+                        </button>
+                      : <button className='gray-btn'>
+                          <Image width='24' height='24' src='/img/usage/time.svg'></Image>
+                          <span>Participate in the next round</span>
+                        </button>
+                    }
+                    </>
+                }
+                </> : <>
+                  {
+                    gameStatus === 'ended' ? <>
+                    {
+                      isOwner
+                      ? <button className='linear-btn' onClick={() => claimAllNFT()}>
+                          <Image width='24' height='24' src='/img/usage/loc.svg'></Image>
+                          <span>Claim All NFTs</span>
+                        </button>
+                      : <>
+                        {
+                          canClaimETH
+                          ? <button className='linear-btn' onClick={() => claimETH()}>
+                              <Image width='24' height='24' src='/img/usage/loc.svg'></Image>
+                              <span>Claim My ETH</span>
+                            </button>
+                          : <button className='gray-btn'>
+                              <Image width='24' height='24' src='/img/usage/time.svg'></Image>
+                              <span>Sale Has Ended</span>
+                            </button>
+                        }
+                      </>
+                    }
+                    </> : <>
+                    {
+                      gameStatus === 'isOpeninig' ? <>
+                        <button className='gray-btn'>
+                          <Image width='24' height='24' src='/img/usage/time.svg'></Image>
+                          <span>Await VRF callback...</span>
+                        </button>
+                      </> : <>
+                        {
+                          gameStatus === 'waiting' ? <>
+                          {
+                            isOwner
+                            ? <button className='linear-btn' onClick={() => startAppendNFT()}>
+                                <Image width='24' height='24' src='/img/usage/loc.svg'></Image>
+                                <span>Choose NFT</span>
+                              </button>
+                            : <button className='gray-btn'>
+                              <Image width='24' height='24' src='/img/usage/time.svg'></Image>
+                              <span>{'Start time: ' + new Date(config?.fundraisingStartTime).toLocaleString()}</span>
+                            </button>
+                          }
+                          </> : <>
+                          {
+                            gameStatus === 'open' ? <>
+                            {
+                              isOwner
+                              ? <button className='linear-btn' onClick={() => startAppendNFT()}>
+                                  <Image width='24' height='24' src='/img/usage/loc.svg'></Image>
+                                  <span>Choose NFT</span>
+                                </button>
+                              : <>
+                              {
+                                selected.length === 0 ? <>
+                                  <button className='gray-btn'>
+                                    <Image width='24' height='24' src='/img/usage/time.svg'></Image>
+                                    <span>waiting...</span>
+                                  </button>
+                                </> : <>
+                                  <button className='linear-btn' onClick={() => startAppendETH()}>
+                                    <Image width='24' height='24' src='/img/usage/loc.svg'></Image>
+                                    <span>Make offer</span>
+                                  </button>
+                                </>
+                              }
+                              </>
+                            }
+                            </> : <button className='gray-btn'>
+                              <Image width='24' height='24' src='/img/usage/time.svg'></Image>
+                              <span>loading...</span>
+                            </button>
+                          }
+                          </>
+                        }
+                      </>
+                    }
+                    </>
+                  }
+                </>
+              }
             </div>
           </div>
         </div>
