@@ -62,8 +62,8 @@ export default function Create() {
   const setTimeRange = (range) => {
     setConfig({
       ...config,
-      fundraisingStartTime: convertTime(range[0]),
-      deadline: convertTime(range[1])
+      fundraisingStartTime: range[0],
+      deadline: range[1]
     })
   }
 
@@ -82,6 +82,12 @@ export default function Create() {
         provider.getSigner()
       )
 
+      console.log('createGamble', config)
+      if (!config.deadline || !config.fundraisingStartTime) {
+        toast("请先设置时间区间!")
+        return
+      }
+
       const convertConfig = {
         minFundraisingAmount: ethers.FixedNumber.from(config.minFundraisingAmount),
         creatorWinProbability: ethers.BigNumber.from(config.creatorWinProbability),
@@ -91,15 +97,15 @@ export default function Create() {
         deadline: ethers.BigNumber.from(convertTime(config.deadline)),
         chainRandomMode: config.chainRandomMode
       }
-
-      if (convertConfig.deadline * 1000 <= Date.now()) {
+      console.log('convertConfig', convertConfig)
+      if (convertConfig.deadline.toString() * 1000 <= Date.now()) {
         toast('Deadline 时间不对', {
           type: 'error'
         })
         return
       }
 
-      if (convertConfig.deadline <= convertConfig.fundraisingStartTime) {
+      if (convertConfig.deadline.toString() <= convertConfig.fundraisingStartTime.toString()) {
         toast('时间区间不对', {
           type: 'error'
         })
