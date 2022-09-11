@@ -439,14 +439,11 @@ export default function Game() {
   }, [from, isOwner])
 
   if (loadingState.init) {
-    return <>
-      placeholder
-    </>
+    return <div className='game-container-loading'>
+      loading
+    </div>
   }
-  console.log('myBid', myBid)
-  console.log('minOffer', minOffer)
-  console.log('maxOffer', maxOffer)
-  console.log('config', config)
+  
   return <>
     <div className='game-container'>
       <div className='game-left'>
@@ -792,18 +789,6 @@ export default function Game() {
         }
       </div>
     </div>
-    {/* <input value={value} type='text' onChange={(evt) => setValue(evt.target.value)}></input>
-    <Button color="blue" loading={loadingState.join} appearance="primary" onClick={() => joinGame()}>Join</Button>
-    <Button color="blue" loading={loadingState.play} appearance="primary" onClick={() => playGame()}>Play</Button>
-    {
-      canClaimAllNFT && <Button color="blue" loading={loadingState.claimAllNFT} appearance="primary" onClick={() => claimAllNFT()}>Claim All NFT</Button>
-    }
-    {
-      canClaimETH && <Button color="blue" loading={loadingState.claimETH} appearance="primary" onClick={() => claimETH()}>Claim ETH</Button>
-    }
-    {
-      canAppendNFT && <Button color="blue" appearance="primary" onClick={() => setShowSelect(true)}>Append NFT</Button>
-    } */}
-    <SelectNFTModal id={id} account={account} display={showSelect} onClose={() => setShowSelect(false)}></SelectNFTModal>
+    <SelectNFTModal selectedNFT={selected} id={id} account={account} display={showSelect} onClose={() => setShowSelect(false)}></SelectNFTModal>
   </>
 }

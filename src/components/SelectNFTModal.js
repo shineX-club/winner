@@ -1,5 +1,5 @@
 import { ethers } from 'ethers'
-import { Modal, ButtonToolbar, Button, Placeholder } from 'rsuite'
+import { Modal } from 'rsuite'
 import { useState, useEffect } from 'react'
 import { useWeb3React } from '@web3-react/core'
 import { $fetch } from 'ohmyfetch'
@@ -7,11 +7,11 @@ import { groupBy } from 'lodash-es'
 import { CONTRACT_ADDRESS } from 'connectors/contract'
 import ERC721ABI from '../../ABI-ERC721.json'
 
-export default function SelectNFTModal({ id, account, display, onClose }) {
+export default function SelectNFTModal({ id, account, display, onClose, selectedNFT }) {
   const { provider } = useWeb3React()
   const [nfts, setNFTs] = useState([])
   const [loadingList, setLoadingList] = useState({})
-  const [selected, setSelected] = useState([])
+  const [selected, setSelected] = useState([...selectedNFT])
   const [collapse, setCollapse] = useState(-1)
 
   const handleClose = () => {

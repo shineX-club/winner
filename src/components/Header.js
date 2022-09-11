@@ -31,9 +31,7 @@ export function Header() {
         <Link href='/spaces'>
           <a>Spaces</a>
         </Link>
-        <Link href='/'>
-          <a target='_blank'>Etherscan</a>
-        </Link>
+        <a target='_blank' rel='noreferrer' href='https://rinkeby.etherscan.io/address/0x58e7c6d0e80369E915ada5e90c109573A2854852'>Contract</a>
         <Link href='/blog'>
           <a>Blog</a>
         </Link>
