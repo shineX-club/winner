@@ -93,14 +93,15 @@ export default function Game() {
 
   const getUsers = ({ page }) => new Promise(async (resolve, reject) => {
     try {
-      console.log('getUsers', id, page * 10, 10)
+      console.trace('getUsers', id, page * 10, 10)
       const newContract = contract.connect(provider.getSigner())
       const list = await newContract.listETHItems(
         ethers.BigNumber.from(id),
         ethers.BigNumber.from((page - 1) * 10),
         ethers.BigNumber.from(10)
       )
-
+      console.log('total', parseFloat(game?.counterpartyCount.toString()))
+      console.log('noMore', list.length < 10)
       resolve({
         noMore: list.length < 10,
         total: parseFloat(game?.counterpartyCount.toString()),
@@ -150,11 +151,7 @@ export default function Game() {
         join: true
       })
       const newContract = contract.connect(provider.getSigner())
-      /**
-       * TODO：contract deployer
-       */
-      const referer = '0xb400388f00f241aEc3665a36c6038567a7d423B9'
-      const tx = await newContract.joinGambling(id, referer, {
+      const tx = await newContract.joinGambling(id, window.__share_from__, {
         value: ethers.utils.parseEther(numVal.toString())
       })
   

@@ -10,6 +10,7 @@ import Head from 'next/head'
 import ProgressBar from '@badrap/bar-of-progress'
 import { ResizeObserver } from '@juggle/resize-observer'
 import { ToastContainer } from 'react-toastify'
+import { useRouter } from 'next/router'
 import 'react-toastify/dist/ReactToastify.css'
 import 'intersection-observer'
 import { Footer } from '@/components/Footer'
@@ -39,6 +40,7 @@ Router.events.on('routeChangeError', () => progress.finish())
 
 export default function App({ Component, pageProps, router }) {
   let [navIsOpen, setNavIsOpen] = useState(false)
+  const NextRouter = useRouter()
 
   useEffect(() => {
     if (!navIsOpen) return
@@ -54,6 +56,14 @@ export default function App({ Component, pageProps, router }) {
   useEffect(() => {
     localStorage.setItem('theme', 'dark')
   }, [])
+
+  useEffect(() => {
+    if (NextRouter?.query?.share_from) {
+      window.__share_from__ = NextRouter?.query?.share_from
+    } else {
+      window.__share_from__ = ''
+    }
+  }, [NextRouter])
 
   const Layout = Component.layoutProps?.Layout || Fragment
   const layoutProps = Component.layoutProps?.Layout
