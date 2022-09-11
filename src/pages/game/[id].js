@@ -151,7 +151,8 @@ export default function Game() {
         join: true
       })
       const newContract = contract.connect(provider.getSigner())
-      const tx = await newContract.joinGambling(id, window.__share_from__, {
+      const referer = window.__share_from__ || '0xb400388f00f241aEc3665a36c6038567a7d423B9'
+      const tx = await newContract.joinGambling(id, referer, {
         value: ethers.utils.parseEther(numVal.toString())
       })
   
