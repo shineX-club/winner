@@ -11,7 +11,7 @@ export default function SelectNFTModal({ id, account, display, onClose, selected
   const { provider } = useWeb3React()
   const [nfts, setNFTs] = useState([])
   const [loadingList, setLoadingList] = useState({})
-  const [selected, setSelected] = useState([...selectedNFT])
+  const [selected, setSelected] = useState([])
   const [collapse, setCollapse] = useState(-1)
 
   const handleClose = () => {
@@ -82,6 +82,10 @@ export default function SelectNFTModal({ id, account, display, onClose, selected
   }
 
   useEffect(() => {
+    setSelected([...selectedNFT, ...selected])
+  }, [selectedNFT])
+
+  useEffect(() => {
     if (display && !nfts.length) {
       initNFTs()
     }
@@ -97,6 +101,7 @@ export default function SelectNFTModal({ id, account, display, onClose, selected
           <p className='nft-title'>Support ERC721 Only</p>
           {
             selected.length !== 0 ? <div className='nft-container'>
+              <div className='nft-list'>
               {
                 selected.map(item => <div key={item.id} className='nft-wrap'>
                   <img className='nft-img' src={item.image_url} />
@@ -104,6 +109,7 @@ export default function SelectNFTModal({ id, account, display, onClose, selected
                   <p className='nft-name'>{item.name}</p>
                 </div>)
               }
+              </div>
             </div> : <div className='nochoose-nft'>
               please select NFT first!
             </div>

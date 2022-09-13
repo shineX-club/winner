@@ -402,6 +402,10 @@
           flex-direction: row;
           justify-content: space-between;
           align-items: center;
+          
+          &:not(:first-child) {
+            margin-top: 20px;
+          }
 
           .left {
             font-weight: 600;
@@ -555,13 +559,61 @@
 }
 
 .nft-box {
-  display: flex;
+  display: grid;
   border-radius: 12px;
   overflow: hidden;
+  grid-gap: 5px;
+  background-color: #fff;
+  padding: 10px;
 
-  .nft-img {
+  .nft-box-shim {
     width: 100%;
-    height: 100%;
+    aspect-ratio: 1;
+    background-color: rgb(241, 242, 243);
+    border-radius: 12px;
+    font-size: 20px;
+    font-weight: bold;
+    color: #000000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  &-c1 {
+    grid-template-columns: repeat(1, 1fr);
+  }
+
+  &-c2 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  &-c3 {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  &-c4 {
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  .nft-wrap {
+    border-radius: 10px;
+    cursor: pointer;
+    overflow: hidden;
+    background: #f1f2f3;
+
+    &.bordered {
+      padding: 3px;
+    }
+
+    &.selected {
+      background: linear-gradient(274.01deg, #08BBE4 1.58%, #54E08C 96.99%);
+    }
+
+    .nft-img {
+      width: 100%;
+      height: 100%;
+      border-radius: 8px;
+    }
   }
 }
 
@@ -751,10 +803,28 @@
     width: 285px;
     height: 400px;
     background-color: #fff;
-    padding: 10px;
     border: 1px solid #E3E5E7;
     border-radius: 16px;
     margin: 10px;
+    overflow: hidden;
+
+    .game-status {
+      .close,
+      .join {
+        padding: 2px 10px;
+        border-radius: 8px;
+      }
+
+      .close {
+        background: #F1F2F3;
+        color: #9499A0;
+      }
+
+      .join {
+        background: linear-gradient(274.01deg, rgba(8, 187, 228, 0.2) 1.58%, rgba(84, 224, 140, 0.2) 96.99%);
+        color: #18191C;
+      }
+    }
 
     .name-line {
       display: flex;
@@ -795,6 +865,12 @@
         justify-content: center;
         align-items: center;
       }
+    }
+
+    .nft-flow-bottom {
+      display: block;
+      padding: 0 10px 10px;
+      margin-top: -10px;
     }
   }
 }

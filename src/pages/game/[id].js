@@ -23,8 +23,10 @@ export default function Game() {
   const [selected, setSelected] = useState([])
   const [game, setGame] = useState(null)
   const [config, setConfig] = useState(null)
+  const [setting, setSetting] = useState(null)
   const [value, setValue] = useState(0)
   const [myBid, setMyBid] = useState(0)
+  const [index, setIndex] = useState(0)
   const [claimingNFTList, setClaimingNFTList] = useState({})
   const [loadingState, setLoadingState] = useState({
     claimAllNFT: false,
@@ -43,8 +45,16 @@ export default function Game() {
   
       console.log('getGame', id)
       const newContract = contract.connect(provider.getSigner())
-      let result = await newContract.getGamblingStatus(id)
-      setConfig({
+
+      const [result, setting] = await Promise.all([
+        newContract.getGamblingStatus(id),
+        newContract.getCoreConfig()
+      ])
+      const convertSetting = {
+        ...setting,
+        participantJoinFeeRatio: 10000 - setting.participantJoinFeeRatio.toString()
+      }
+      const convertConfig = {
         minCounterpartyBid: ethers.utils.formatEther(result.record.config.minCounterpartyBid),
         maxCounterpartyBid: ethers.utils.formatEther(result.record.config.maxCounterpartyBid),
         minFundraisingAmount: ethers.utils.formatEther(result.record.config.minFundraisingAmount),
@@ -54,29 +64,13 @@ export default function Game() {
         chainRandomMode: result.record.config.chainRandomMode,
         fundraisingStartTime: result.record.config.fundraisingStartTime.toString() * 1000,
         deadline: result.record.config.deadline.toString() * 1000
-      })
+      }
+      setSetting(convertSetting)
+      setConfig(convertConfig)
       setGame(result)
       console.log('game', result)
-      const selectedNFTs = result.collections.map(_ => {
-        return {
-          address: _.contractAddress,
-          tokenId: _.tokenId.toString(),
-          count: Number(_.amount.toString()),
-          tombstone: _.tombstone
-        }
-      })
-  
-      if (selectedNFTs.length) {
-        const getSelectedNFT = async ({ address, tokenId, tombstone }) => {
-          const data = await $fetch(`https://testnets-api.opensea.io/api/v1/assets?asset_contract_address=${address}&token_ids=${tokenId}`)
-          data.assets[0].tombstone = tombstone
-          return data.assets[0]
-        }
-  
-        const selected = await Promise.all(selectedNFTs.map(getSelectedNFT))
-        console.log('selected', selected)
-        setSelected(selected)
-      }
+      console.log('config', convertConfig)
+      console.log('setting', convertSetting)
     } catch (err) {
       console.log('getGame', err);
     }
@@ -89,26 +83,25 @@ export default function Game() {
     const newContract = contract.connect(provider.getSigner())
     const result = await newContract.getETHItem(id, account)
     setMyBid(parseFloat(result.toString()))
+    console.log('myBid', parseFloat(result.toString()))
   }
 
   const getUsers = ({ page }) => new Promise(async (resolve, reject) => {
     try {
-      console.trace('getUsers', id, page * 10, 10)
+      console.log('getUsers', id, page * 10, 10)
       const newContract = contract.connect(provider.getSigner())
       const list = await newContract.listETHItems(
         ethers.BigNumber.from(id),
         ethers.BigNumber.from((page - 1) * 10),
         ethers.BigNumber.from(10)
       )
-      console.log('total', parseFloat(game?.counterpartyCount.toString()))
-      console.log('noMore', list.length < 10)
       resolve({
         noMore: list.length < 10,
         total: parseFloat(game?.counterpartyCount.toString()),
         result: list.map(_ => {
           return {
             address: _.account,
-            amount: ethers.utils.formatEther(_.amount.toString())
+            amount: ethers.utils.formatEther(_.amount)
           }
         })
       })
@@ -130,18 +123,13 @@ export default function Game() {
         return
       }
   
-      const numVal = parseFloat(value) || parseFloat(config?.minCounterpartyBid)
-      if (numVal <= 0) {
-        toast('不能小于0')
-        return
-      }
-  
-      if (numVal < config.minCounterpartyBid) {
+      const numVal = (parseFloat(value) || parseFloat(config?.minCounterpartyBid)).toFixed(5)
+      if (numVal < minOffer) {
         toast('不能小于最小值')
         return
       }
   
-      if (parseFloat(config.maxCounterpartyBid) && parseFloat(config.maxCounterpartyBid) < numVal) {
+      if (maxOffer < numVal) {
         toast('不能大于最大值')
         return
       }
@@ -153,7 +141,9 @@ export default function Game() {
       const newContract = contract.connect(provider.getSigner())
       const referer = window.__share_from__ || '0x0000000000000000000000000000000000000000'
       const tx = await newContract.joinGambling(id, referer, {
-        value: ethers.utils.parseEther(numVal.toString())
+        value: ethers.utils.parseEther(
+          numVal.toString()
+        ).add(ethers.utils.parseEther(numVal).div(10000).mul(10000 - setting.participantJoinFeeRatio))
       })
   
       console.log("tx", tx);
@@ -211,13 +201,18 @@ export default function Game() {
 
   const claimAllNFT = async () => {
     try {
-      if (gameStatus !== 'ended') {
-        toast('游戏结束后才可以 claim')
+      if (gameStatus !== 'ended' && gameStatus !== 'Finshed') {
+        toast('现在不能 claim')
         return
       }
 
-      if (!isWinner) {
-        toast('游戏胜利者才可以 claim')
+      if (gameStatus === 'ended' && !isOwner) {
+        toast('创建者才可以 claim')
+        return
+      }
+
+      if (gameStatus === 'Finshed' && !isWinner) {
+        toast('胜利者才可以 claim')
         return
       }
 
@@ -259,13 +254,18 @@ export default function Game() {
 
   const claimOneNFT = async (nft, index) => {
     try {
-      if (gameStatus !== 'ended') {
-        toast('游戏结束后才可以 claim')
+      if (gameStatus !== 'ended' && gameStatus !== 'Finshed') {
+        toast('现在不能 claim')
         return
       }
 
-      if (!isWinner) {
-        toast('游戏胜利者才可以 claim')
+      if (gameStatus === 'ended' && !isOwner) {
+        toast('创建者才可以 claim')
+        return
+      }
+
+      if (gameStatus === 'Finshed' && !isWinner) {
+        toast('胜利者才可以 claim')
         return
       }
 
@@ -299,7 +299,7 @@ export default function Game() {
 
   const claimETH = async () => {
     try {
-      if (gameStatus !== 'ended') {
+      if (gameStatus !== 'ended' && gameStatus !== 'Finshed') {
         toast('游戏结束后可以提币')
         return
       }
@@ -384,7 +384,8 @@ export default function Game() {
   }, [game, selected])
 
   const canClaimETH = useMemo(() => {
-    return myBid > 0 || account === game?.record.creator
+    return myBid > 0
+    // return myBid > 0 || account === game?.record.creator
   }, [myBid, game, account])
 
   const minOffer = useMemo(() => {
@@ -403,15 +404,26 @@ export default function Game() {
       return 0
     }
 
+    // if (parseFloat(config?.maxCounterpartyBid)) {
+    //   return Math.min(...[
+    //     parseFloat(config?.maxCounterpartyBid),
+    //     config?.maxFundraisingAmount - config?.fundraisingAmount
+    //   ])
+    // }
+
+    // return Math.min(...[
+    //   config?.minFundraisingAmount - config?.fundraisingAmount
+    // ])
+
     if (parseFloat(config?.maxCounterpartyBid)) {
       return Math.min(...[
         parseFloat(config?.maxCounterpartyBid),
-        config?.maxFundraisingAmount - config?.fundraisingAmount
+        config?.maxFundraisingAmount
       ])
     }
 
     return Math.min(...[
-      config?.minFundraisingAmount - config?.fundraisingAmount
+      config?.minFundraisingAmount
     ])
   }, [config])
 
@@ -448,14 +460,13 @@ export default function Game() {
   return <>
     <div className='game-container'>
       <div className='game-left'>
+        <NFTBox
+          collection={game.collections}
+          onLoad={(nfts) => setSelected(nfts)}
+          onChange={(index) => setIndex(index)}
+        ></NFTBox>
         {
-          selected.length !== 0 ? <>
-          {
-            selected.map((item, index) => <div key={item.id}>
-              <NFTBox item={item}></NFTBox>
-              {/* <Button disabled={item.tombstone} loading={claimingNFTList[item.id]} onClick={() => claimOneNFT(item, index)}>Claim</Button> */}
-            </div>)
-          }
+          selected.length !== 0 && <>
             <div className='panel-wrap'>
               <div className='panel-name'>
                 <div className='panel-name-left'>
@@ -483,7 +494,7 @@ export default function Game() {
                       Contract Address
                     </div>
                     <div className='panel-value'>
-                      {convertAddress(selected[0]?.asset_contract?.address)}
+                      {convertAddress(selected[index]?.asset_contract?.address)}
                     </div>
                   </div>
                   <div>
@@ -491,7 +502,7 @@ export default function Game() {
                       Token Standard
                     </div>
                     <div className='panel-value'>
-                      {selected[0]?.asset_contract?.schema_name}
+                      {selected[index]?.asset_contract?.schema_name}
                     </div>
                   </div>
                   <div>
@@ -499,23 +510,20 @@ export default function Game() {
                       Token ID
                     </div>
                     <div className='panel-value'>
-                      {selected[0]?.token_id}
+                      {selected[index]?.token_id}
                     </div>
                   </div>
                 </div>
               </div>
             </div>
-          </> : <div className='empty-nft'>
-            <Image width='163' height='121' src='/img/usage/empty-box.svg'></Image>
-          </div>
+          </>
         }
       </div>
       <div className='game-right'>
         <div className='game-label'>
           <div className='game-label-name'>
             <div className='game-label-name-left'>
-              {/* {selected[0]?.collection.name }# */}
-              {selected[0]?.name}
+              {selected[index]?.name}
             </div>
             {
               gameStatus && <div className={classnames(['game-label-name-right', gameStatus])}>
@@ -525,9 +533,9 @@ export default function Game() {
           </div>
           <div className='game-label-progress'>
             <Progress.Line
-              status={gameStatus === 'open' ? 'active' : gameStatus === 'ended' ? 'fail' : 'success'}
+              status={gameStatus === 'ended' ? 'fail' : gameStatus === 'open' && config.maxFundraisingAmount > config.fundraisingAmount ? 'active' : 'success'}
               percent={config?.fundraisingAmount / config?.minFundraisingAmount * 100}
-              showInfo={false}
+              // showInfo={false}
               strokeWidth={20}
             />
           </div>
@@ -609,7 +617,7 @@ export default function Game() {
                         </button>
                       : <button className='gray-btn'>
                           <Image width='24' height='24' src='/img/usage/time.svg'></Image>
-                          <span>Participate in the next round</span>
+                          <span>&nbsp;Participate in the next round</span>
                         </button>
                     }
                     </>
@@ -658,15 +666,27 @@ export default function Game() {
                               <span>{'Start time: ' + new Date(config?.fundraisingStartTime).toLocaleString()}</span>
                             </button>
                           }
-                          </> : <>
+                          </> : <div className='footer-control'>
                           {
                             gameStatus === 'open' ? <>
                             {
+                              gamePlayable && <button className='linear-btn' onClick={() => playGame()}>
+                                <Image width='24' height='24' src='/img/usage/loc.svg'></Image>
+                                <span>Make deal</span>
+                              </button>
+                            }
+                            {
                               isOwner
-                              ? <button className='linear-btn' onClick={() => startAppendNFT()}>
-                                  <Image width='24' height='24' src='/img/usage/loc.svg'></Image>
-                                  <span>Choose NFT</span>
-                                </button>
+                              ? <>
+                              {
+                                config.fundraisingAmount < config.maxFundraisingAmount && <>
+                                  <button className='linear-btn' onClick={() => startAppendNFT()}>
+                                    <Image width='24' height='24' src='/img/usage/loc.svg'></Image>
+                                    <span>Choose NFT</span>
+                                  </button>
+                                </>
+                              }
+                              </>
                               : <>
                               {
                                 selected.length === 0 ? <>
@@ -675,20 +695,25 @@ export default function Game() {
                                     <span>waiting...</span>
                                   </button>
                                 </> : <>
-                                  <div className='footer-control'>
-                                    <InputNumber
-                                      size='lg'
-                                      postfix="ETH"
-                                      min={minOffer}
-                                      max={maxOffer}
-                                      defaultValue={config?.minCounterpartyBid}
-                                      onChange={setValue}
-                                    />
-                                    <button className='linear-btn' onClick={() => joinGame()}>
-                                      <Image width='24' height='24' src='/img/usage/loc.svg'></Image>
-                                      <span>Make offer</span>
-                                    </button>
-                                  </div>
+                                {
+                                  config.maxFundraisingAmount >= config.fundraisingAmount
+                                    ? <>
+                                    </>
+                                    : <>
+                                        <InputNumber
+                                          size='lg'
+                                          postfix="ETH"
+                                          min={minOffer}
+                                          max={maxOffer}
+                                          defaultValue={config?.minCounterpartyBid}
+                                          onChange={setValue}
+                                        />
+                                        <button className='linear-btn' onClick={() => joinGame()}>
+                                          <Image width='24' height='24' src='/img/usage/loc.svg'></Image>
+                                          <span>Make offer</span>
+                                        </button>
+                                      </>
+                                }
                                 </>
                               }
                               </>
@@ -698,7 +723,7 @@ export default function Game() {
                               <span>loading...</span>
                             </button>
                           }
-                          </>
+                          </div>
                         }
                       </>
                     }

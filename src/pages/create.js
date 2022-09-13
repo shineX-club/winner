@@ -142,13 +142,13 @@ export default function Create() {
       setSubmitting(true)
       const estimateGas = await newContract.estimateGas.createGambling(convertConfig)
       console.log('gas', ethers.utils.formatEther(estimateGas))
-      toast('合约提交中')
+      toast('交易创建中')
       const tx = await newContract.createGambling(convertConfig)
       console.log("tx", tx);
-      toast('合约部署中')
+      toast('交易部署中')
       const receipt = await tx.wait();
       console.log("receipt", receipt);
-      toast('合约部署成功')
+      toast('交易部署成功')
       setTimeout(() => {
         window.location = `/game/${receipt.events[0].args.id.toString()}?from=create`
       }, 1500)

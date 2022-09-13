@@ -3,7 +3,6 @@ import { useState } from "react"
 import { contract } from "connectors/contract"
 import FlowList from '@flowlist/react-flowlist'
 import { Progress } from 'rsuite'
-import { $fetch } from "ohmyfetch"
 import { ethers } from 'ethers'
 import Image from 'next/image'
 import NFTBox from '@/components/NFTBox'
@@ -26,13 +25,20 @@ function GameLoader() {
 }
 
 function GameItem({ item }) {
+  const [index, setIndex] = useState(0)
+  const [info, setInfo] = useState(null)
+
   console.log('item', item)
   return <div className="game-flow-item">
+    <NFTBox
+      collection={item.collections}
+      onLoad={(d) => setInfo(d)}
+      onChange={(i) => setIndex(i)}
+    ></NFTBox>
     <Link href={`/game/${item.id}`}>
-      <a>
-        <NFTBox item={item.nft}></NFTBox>
+      <a className="nft-flow-bottom">
         <div className='name-line'>
-          <span>{item.nft.name}</span>
+          <span>{info?.[index]?.name || 'Waiting to choose'}</span>
           <div>
             <Image width='15' height='16' src='/img/usage/eth.png'></Image>
             <span>{ethers.utils.formatEther(item.record.config.minCounterpartyBid.toString())}</span>
@@ -48,6 +54,13 @@ function GameItem({ item }) {
             <Image width='18' height='18' src='/img/usage/user.png'></Image>
             &nbsp;
             <span>{convertAddress(item?.record?.creator)}</span>
+          </div>
+          <div className="game-status">
+            {
+              item?.record.winner !== '0x0000000000000000000000000000000000000000' || item?.record?.config?.deadline.toString() <= parseFloat(Date.now() / 1000)
+                ? <div className="close">Closed</div>
+                : <div className="join">Join</div>
+            }
           </div>
         </div>
       </a>
@@ -90,11 +103,6 @@ export default function Spaces() {
     }
   })
 
-  const getNftInfo = async ({ address, tokenId }) => {
-    const data = await $fetch(`https://testnets-api.opensea.io/api/v1/assets?asset_contract_address=${address}&token_ids=${tokenId}`)
-    return data.assets[0]
-  }
-
   const getPostData = () => new Promise(async (resolve, reject) => {
     try {
       console.log('getPostData')
@@ -118,23 +126,6 @@ export default function Spaces() {
           ...item
         }
       })
-
-      const nfts = await Promise.all(data.map(_ => {
-        if (!_.collections[0]) {
-          return null
-        }
-        return getNftInfo({
-          address: _.collections[0].contractAddress,
-          tokenId: _.collections[0].tokenId.toString()
-        })
-      }))
-      console.log('nfts', nfts)
-      data = data.map((item, index) => {
-        return {
-          ...item,
-          nft: nfts[index]
-        }
-      }).filter(_ => _.nft)
 
       setPageState({
         ...pageState,
