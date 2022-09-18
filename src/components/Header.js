@@ -6,7 +6,7 @@ import { useWeb3React } from '@web3-react/core'
 import { toast } from 'react-toastify'
 
 export function Header() {
-  const { account } = useWeb3React()
+  const { account, chainId } = useWeb3React()
   const [state, copyToClipboard] = useCopyToClipboard()
 
   const copyLink = () => {
@@ -20,33 +20,40 @@ export function Header() {
     toast('copy success!')
   }
 
-  return <header className='app-header'>
-    <div className='header-left'>
-      <Link href='/'>
-        <a href='/' className='logo'>
-          <Image width='131' height='40' src='/img/usage/logo.svg'></Image>
-        </a>
-      </Link>
-      <div className='links'>
-        <Link href='/spaces'>
-          <a>Spaces</a>
+  return <>
+    <header className='app-header'>
+      <div className='header-left'>
+        <Link href='/'>
+          <a href='/' className='logo'>
+            <Image width='131' height='40' src='/img/usage/logo.svg'></Image>
+          </a>
         </Link>
-        <a target='_blank' rel='noreferrer' href='https://rinkeby.etherscan.io/address/0x58e7c6d0e80369E915ada5e90c109573A2854852'>Contract</a>
-        <Link href='/blog'>
-          <a>Blog</a>
-        </Link>
+        <div className='links'>
+          <Link href='/spaces'>
+            <a>Spaces</a>
+          </Link>
+          <a target='_blank' rel='noreferrer' href='https://rinkeby.etherscan.io/address/0x58e7c6d0e80369E915ada5e90c109573A2854852'>Contract</a>
+          <Link href='/blog'>
+            <a>Blog</a>
+          </Link>
+        </div>
       </div>
-    </div>
-    <div className='header-right'>
-      <Image
-        className='share-to-earn'
-        width='127'
-        height='51'
-        src='/img/usage/share.svg'
-        onClick={copyLink}
-      ></Image>
-      &nbsp;&nbsp;&nbsp;&nbsp;
-      <ConnectorButton></ConnectorButton>
-    </div>
-  </header>
+      <div className='header-right'>
+        <Image
+          className='share-to-earn'
+          width='127'
+          height='51'
+          src='/img/usage/share.svg'
+          onClick={copyLink}
+        ></Image>
+        &nbsp;&nbsp;&nbsp;&nbsp;
+        <ConnectorButton></ConnectorButton>
+      </div>
+    </header>
+    {
+      chainId && chainId.toString() !== '5' && <div className='header-tips'>
+        You're viewing data from the test network (Goerli), To use Winner, please switch chainID
+      </div>
+    }
+  </>
 }

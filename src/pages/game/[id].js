@@ -3,7 +3,6 @@ import { useRouter } from 'next/router'
 import { useEffect, useState, useMemo } from 'react'
 import { contract } from 'connectors/contract'
 import { useWeb3React } from '@web3-react/core'
-import { $fetch } from 'ohmyfetch'
 import { Progress, InputNumber } from 'rsuite'
 import SelectNFTModal from '@/components/SelectNFTModal'
 import { toast } from 'react-toastify'
@@ -494,7 +493,7 @@ export default function Game() {
                       Contract Address
                     </div>
                     <div className='panel-value'>
-                      {convertAddress(selected[index]?.asset_contract?.address)}
+                      {convertAddress(selected[index]?.contract?.address)}
                     </div>
                   </div>
                   <div>
@@ -502,7 +501,7 @@ export default function Game() {
                       Token Standard
                     </div>
                     <div className='panel-value'>
-                      {selected[index]?.asset_contract?.schema_name}
+                      {selected[index]?.tokenType}
                     </div>
                   </div>
                   <div>
@@ -510,7 +509,7 @@ export default function Game() {
                       Token ID
                     </div>
                     <div className='panel-value'>
-                      {selected[index]?.token_id}
+                      {selected[index]?.tokenId}
                     </div>
                   </div>
                 </div>
@@ -523,7 +522,7 @@ export default function Game() {
         <div className='game-label'>
           <div className='game-label-name'>
             <div className='game-label-name-left'>
-              {selected[index]?.name}
+              {selected[index]?.rawMetadata?.name}
             </div>
             {
               gameStatus && <div className={classnames(['game-label-name-right', gameStatus])}>

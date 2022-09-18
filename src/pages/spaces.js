@@ -38,7 +38,7 @@ function GameItem({ item }) {
     <Link href={`/game/${item.id}`}>
       <a className="nft-flow-bottom">
         <div className='name-line'>
-          <span>{info?.[index]?.name || 'Waiting to choose'}</span>
+          <span>{info?.[index]?.rawMetadata?.name || 'Waiting to choose'}</span>
           <div>
             <Image width='15' height='16' src='/img/usage/eth.png'></Image>
             <span>{ethers.utils.formatEther(item.record.config.minCounterpartyBid.toString())}</span>

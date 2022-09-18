@@ -1,15 +1,14 @@
 import { useEffect, useMemo, useState } from "react"
-import { $fetch } from "ohmyfetch"
 import classNames from "classnames"
+import { alchemy } from 'connectors/alchemy'
 
 export default function NFTBox({ collection, onLoad, onChange }) {
-  console.log('NFTBox', collection)
   const [nfts, setNFTs] = useState(null)
   const [current, setCurrent] = useState(0)
 
   const getNftInfo = async ({ address, tokenId }) => {
-    const data = await $fetch(`https://testnets-api.opensea.io/api/v1/assets?asset_contract_address=${address}&token_ids=${tokenId}`)
-    return data.assets[0]
+    const data = await alchemy.nft.getNftMetadata(address, tokenId)
+    return data
   }
 
   const getNFTs = async () => {
@@ -67,11 +66,11 @@ export default function NFTBox({ collection, onLoad, onChange }) {
     {
       nfts.map((item, index) => {
         return <div
-          key={item.id}
+          key={item.contract.address + item.tokenId}
           className={classNames('nft-wrap', index === current ? 'selected' : '', nfts.length > 1 ? 'bordered' : '')}
           onClick={() => updateCur(index)}
         >
-          <img className='nft-img' src={item.image_url} />
+          <img className='nft-img' src={item.rawMetadata.image} />
         </div>
       })
     }
