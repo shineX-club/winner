@@ -64,7 +64,7 @@ export default function NFTBox({ collection, onLoad, onChange }) {
 
   return <div className={classNames('nft-box', `nft-box-c${count}`)}>
     {
-      nfts.map((item, index) => {
+      nfts.filter(_ => _).map((item, index) => {
         return <div
           key={item.contract.address + item.tokenId}
           className={classNames('nft-wrap', index === current ? 'selected' : '', nfts.length > 1 ? 'bordered' : '')}

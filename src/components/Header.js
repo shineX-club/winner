@@ -32,10 +32,10 @@ export function Header() {
           <Link href='/spaces'>
             <a>Spaces</a>
           </Link>
-          <a target='_blank' rel='noreferrer' href='https://rinkeby.etherscan.io/address/0x58e7c6d0e80369E915ada5e90c109573A2854852'>Contract</a>
-          <Link href='/blog'>
+          <a target='_blank' rel='noreferrer' href='https://goerli.etherscan.io/address/0xF5D226a29b216019894B16Ed5A0F1227bD98E1F5'>Contract</a>
+          {/* <Link href='/blog'>
             <a>Blog</a>
-          </Link>
+          </Link> */}
         </div>
       </div>
       <div className='header-right'>
