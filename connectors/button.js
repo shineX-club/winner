@@ -13,7 +13,7 @@ export const connectWallet = async (slient = false) => {
   let connector = metaMask
 
   try {
-    slient ? await connector.connectEagerly(4) : await connector.activate(4)
+    slient ? await connector.connectEagerly(4) : await connector.activate(5)
     Cookies.set('wallet-type', 'metamask')
   } catch (err) {
     console.log('connect wallet err', err)
@@ -23,7 +23,7 @@ export const connectWallet = async (slient = false) => {
 export default function ConnectorButton() {
   const { account, connector, name, chainId } = useWeb3React()
   const login = async () => {
-    if (chainId && chainId.toString() !== '4') {
+    if (chainId && chainId.toString() !== '5') {
       toast('Please switch your chain to Rinkeby first!')
     }
     await connectWallet()
