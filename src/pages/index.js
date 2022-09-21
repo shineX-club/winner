@@ -27,7 +27,7 @@ export default function Home() {
       <div className="faq-wrap">
         <div className="faq-box">
           <div>
-            <div className="faq-title">Leverage trading</div>
+            <div className="faq-title">Leveraged trading</div>
             <div className="faq-desc">
               当你有一个市场价为 7 ETH 的 NFT 时，你可以在 winner 以 5 ETH 的地板价去出售它，同时设置一个最高价（如 10 ETH）以及以最高价成交的概率（如 40%）
               <br></br>
